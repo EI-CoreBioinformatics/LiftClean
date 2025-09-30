@@ -70,6 +70,7 @@ class FilterLiftonLiftoff:
     def __init__(self, args):
         self.args = args
         self.output = None
+        self.prefix = None
         self.debug = self.args.debug
         self.did_lifton = False
         self.did_liftoff = False
@@ -140,7 +141,12 @@ class FilterLiftonLiftoff:
                 os.symlink(org_file, liftoff_link)
                 logging.info(f"Linked Liftoff GFF file {org_file} to {liftoff_link}")
             self.liftoff_gff = os.path.join(self.output, "liftoff.gff")
-        self.output_basename = os.path.basename(self.output)
+
+        if self.args.prefix:
+            self.prefix = self.args.prefix
+        else:
+            self.prefix = os.path.basename(os.path.abspath(self.args.output))
+        logging.info(f"Using prefix '{self.prefix}' for plot titles")
         logging.info(f"Output will be saved to {self.output}")
 
     def process_gff(self, gff_file, label):
@@ -216,13 +222,13 @@ class FilterLiftonLiftoff:
         """
         if self.args.single:
             if self.did_lifton:
-                cmd = f"parse_prepare_log {os.path.join(self.output, 'mikado_prepare_lifton', 'mikado_prepare_lifton.log')} --title 'Rejected Transcripts lifton' --output_prefix 'Rejected_Transcripts' --output {self.output}"
+                cmd = f"parse_prepare_log {os.path.join(self.output, 'mikado_prepare_lifton', 'mikado_prepare_lifton.log')} --title 'Rejected Transcripts lifton' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
                 self.process_cmd(cmd)
             else:
-                cmd = f"parse_prepare_log {os.path.join(self.output, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff.log')} --title 'Rejected Transcripts liftoff' --output_prefix 'Rejected_Transcripts' --output {self.output}"
+                cmd = f"parse_prepare_log {os.path.join(self.output, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff.log')} --title 'Rejected Transcripts liftoff' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
                 self.process_cmd(cmd)
         else:
-            cmd = f"parse_prepare_log {os.path.join(self.output, 'mikado_prepare_lifton', 'mikado_prepare_lifton.log')} {os.path.join(self.output, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff.log')} --title 'Rejected Transcripts lifton and liftoff' --output_prefix 'Rejected_Transcripts' --output {self.output}"
+            cmd = f"parse_prepare_log {os.path.join(self.output, 'mikado_prepare_lifton', 'mikado_prepare_lifton.log')} {os.path.join(self.output, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff.log')} --title 'Rejected Transcripts lifton and liftoff' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
             self.process_cmd(cmd)
 
     def append_strand_summary(self, label):
@@ -290,13 +296,13 @@ class FilterLiftonLiftoff:
         """
         if self.args.single:
             if self.did_lifton:
-                cmd = f"plot_summary_csvs { os.path.join(self.output, f"mikado_prepare_lifton", f"mikado_prepare_lifton_summary_stats.csv")} --title 'Rejected Transcripts lifton {self.output_basename}' --output_prefix 'Rejected_Transcripts_summary_plot' --output {self.output}"
+                cmd = f"plot_summary_csvs { os.path.join(self.output, f"mikado_prepare_lifton", f"mikado_prepare_lifton_summary_stats.csv")} --title 'Rejected Transcripts lifton {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
                 self.process_cmd(cmd)
             else:
-                cmd = f"plot_summary_csvs { os.path.join(self.output, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_summary_stats.csv")} --title 'Rejected Transcripts liftoff {self.output_basename}' --output_prefix 'Rejected_Transcripts_summary_plot' --output {self.output}"
+                cmd = f"plot_summary_csvs { os.path.join(self.output, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_summary_stats.csv")} --title 'Rejected Transcripts liftoff {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
                 self.process_cmd(cmd)
         else:
-            cmd = f"plot_summary_csvs {os.path.join(self.output, 'mikado_prepare_lifton', 'mikado_prepare_lifton_summary_stats.csv')} {os.path.join(self.output, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff_summary_stats.csv')} --title 'Comparison of Rejected Transcripts {self.output_basename}' --output_prefix 'Rejected_Transcripts_summary_plot' --output {self.output}"
+            cmd = f"plot_summary_csvs {os.path.join(self.output, 'mikado_prepare_lifton', 'mikado_prepare_lifton_summary_stats.csv')} {os.path.join(self.output, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff_summary_stats.csv')} --title 'Comparison of Rejected Transcripts {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
             self.process_cmd(cmd)
 
     def compare_parsed_summary_csv(self):
@@ -313,7 +319,7 @@ class FilterLiftonLiftoff:
                 self.process_cmd(cmd)
         else:
             logging.info("Running compare_parsed_summary_csv.py (paired)")
-            cmd = f"compare_parsed_summary_csv --gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} --csv_files {os.path.join(self.output, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} {os.path.join(self.output, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --labels lifton,liftoff --output_prefix {self.output_basename} --output {self.output} --plot_title 'Comparison of Retained and Rejected IDs {self.output_basename}' --exclude '{self.args.exclude}'"
+            cmd = f"compare_parsed_summary_csv --gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} --csv_files {os.path.join(self.output, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} {os.path.join(self.output, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --labels lifton,liftoff --output_prefix {self.prefix} --output {self.output} --plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' --exclude '{self.args.exclude}'"
             self.process_cmd(cmd)
 
     def extract_gene_id_gff(self, label):
@@ -364,7 +370,7 @@ class FilterLiftonLiftoff:
                 f" - liftoff retained TSV: {os.path.join(self.output, f'liftoff.sorted.ids.retained.tsv')}"
             )
         comparison_csv = os.path.join(
-            self.output, f"{self.output_basename}_Rejected_Transcripts.csv"
+            self.output, f"{self.prefix}_Rejected_Transcripts.csv"
         )
         if os.path.isfile(comparison_csv):
             print(f" - Comparison CSV: {comparison_csv}")
@@ -468,11 +474,16 @@ def main():
         "--liftoff_gff",
         help="Provide Liftoff output GFF file",
     )
+    # --prefix for plots titles
+    parser.add_argument(
+        "-p",
+        "--prefix",
+        help="Provide a label for plot titles to distinguish images from multiple runs. If not provided, defaults to base name of the --output. For example, you can use 'Wheat_Accession1' or 'SpeciesX' [default:%(default)s]",
+    )
     # --output directory
     parser.add_argument(
         "-o",
         "--output",
-        # required=True,
         default="output",
         help="Provide output directory [default:%(default)s]",
     )
