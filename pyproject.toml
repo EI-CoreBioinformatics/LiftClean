@@ -1,0 +1,24 @@
+[project]
+name = "filter-lifton-liftoff"
+version = "0.1.0"
+description = "Lifton/Liftoff transcript filtering and comparison pipeline"
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+license = {text = "GNU General Public License v3.0"}
+dependencies = [
+    "matplotlib>=3.9.2,<4.0.0",
+    "pandas>=2.2.3,<3.0.0",
+    "upsetplot>=0.9.0,<1.0.0",
+]
+
+[project.scripts]
+filter_lifton_liftoff = "filter_lifton_liftoff.__main__:main"
+gff_strand_checker = "filter_lifton_liftoff.scripts.gff_strand_checker:main"
+parse_prepare_log = "filter_lifton_liftoff.scripts.parse_prepare_log:main"
+plot_summary_csvs = "filter_lifton_liftoff.scripts.plot_summary_csvs:main"
+compare_parsed_summary_csv = "filter_lifton_liftoff.scripts.compare_parsed_summary_csv:main"
+extract_gene_id_gff = "filter_lifton_liftoff.scripts.extract_gene_id_gff:main"
+
+[build-system]
+requires = ["uv_build>=0.8.22,<0.9.0"]
+build-backend = "uv_build"
