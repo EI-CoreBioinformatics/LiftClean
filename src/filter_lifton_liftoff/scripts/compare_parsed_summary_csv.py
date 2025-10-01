@@ -12,11 +12,9 @@ import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
-def parse_gff(input_files, output_dir, features):
+def parse_gff(input_files, features):
     for gff_file in input_files:
-        output_file = os.path.join(
-            output_dir, f"{os.path.basename(os.path.splitext(gff_file)[0])}.ids.tsv"
-        )
+        output_file = f"{os.path.splitext(gff_file)[0]}.ids.tsv"
         with open(gff_file, "r") as infile, open(output_file, "w") as outfile:
             for line in infile:
                 if line.startswith("#"):
@@ -44,12 +42,9 @@ def parse_gff(input_files, output_dir, features):
                     outfile.write(f"{feature_id}\t{parent_id}\n")
 
 
-def parse_summary_csv(csv_files, output_dir, exclude_types, rm_prefix):
+def parse_summary_csv(csv_files, exclude_types, rm_prefix):
     for csv_file in csv_files:
-        output_file = os.path.join(
-            output_dir,
-            f"{os.path.basename(os.path.splitext(csv_file)[0])}.ids.rejected.txt",
-        )
+        output_file = f"{os.path.splitext(csv_file)[0]}.ids.rejected.txt"
         unique_ids = set()
 
         with open(csv_file, "r") as infile:
@@ -73,12 +68,9 @@ def parse_summary_csv(csv_files, output_dir, exclude_types, rm_prefix):
                 outfile.write(f"{transcript_id}\n")
 
 
-def generate_retained_lists(gff_ids_files, rejected_ids_files, output_dir):
+def generate_retained_lists(gff_ids_files, rejected_ids_files):
     for gff_ids_file, rejected_ids_file in zip(gff_ids_files, rejected_ids_files):
-        retained_output_file = os.path.join(
-            output_dir,
-            f"{os.path.basename(os.path.splitext(os.path.splitext(gff_ids_file)[0])[0])}.ids.retained.txt",
-        )
+        retained_output_file = f"{os.path.splitext(os.path.splitext(gff_ids_file)[0])[0]}.ids.retained.txt"
         gff_ids = set()
         rejected_ids = set()
 
@@ -277,48 +269,30 @@ def main():
                 "Single mode requires --gff_file and --csv_file arguments."
             )
 
-        parse_gff([args.gff_file], args.output, features)
-        parse_summary_csv([args.csv_file], args.output, exclude_types, rm_prefix)
+        parse_gff([args.gff_file], features)
+        parse_summary_csv([args.csv_file], exclude_types, rm_prefix)
 
-        gff_ids_file = os.path.join(
-            args.output,
-            f"{os.path.basename(os.path.splitext(args.gff_file)[0])}.ids.tsv",
-        )
-        rejected_ids_file = os.path.join(
-            args.output,
-            f"{os.path.basename(os.path.splitext(args.csv_file)[0])}.ids.rejected.txt",
-        )
-        generate_retained_lists([gff_ids_file], [rejected_ids_file], args.output)
+        gff_ids_file = f"{os.path.splitext(args.gff_file)[0]}.ids.tsv"
+        rejected_ids_file = f"{os.path.splitext(args.csv_file)[0]}.ids.rejected.txt"
+        generate_retained_lists([gff_ids_file], [rejected_ids_file])
     else:
         if not args.gff_files or not args.csv_files:
             raise ValueError(
                 "Dual mode requires --gff_files and --csv_files (two of each)."
             )
 
-        parse_gff(args.gff_files, args.output, features)
-        parse_summary_csv(args.csv_files, args.output, exclude_types, rm_prefix)
+        parse_gff(args.gff_files, features)
+        parse_summary_csv(args.csv_files, exclude_types, rm_prefix)
 
-        gff_ids_files = [
-            os.path.join(
-                args.output,
-                f"{os.path.basename(os.path.splitext(gff_file)[0])}.ids.tsv",
-            )
+        gff_ids_files = [f"{os.path.splitext(gff_file)[0]}.ids.tsv"
             for gff_file in args.gff_files
         ]
-        rejected_ids_files = [
-            os.path.join(
-                args.output,
-                f"{os.path.basename(os.path.splitext(csv_file)[0])}.ids.rejected.txt",
-            )
+        rejected_ids_files = [f"{os.path.splitext(csv_file)[0]}.ids.rejected.txt"
             for csv_file in args.csv_files
         ]
-        generate_retained_lists(gff_ids_files, rejected_ids_files, args.output)
+        generate_retained_lists(gff_ids_files, rejected_ids_files)
 
-        retained_ids_files = [
-            os.path.join(
-                args.output,
-                f"{os.path.basename(os.path.splitext(gff_file)[0])}.ids.retained.txt",
-            )
+        retained_ids_files = [f"{os.path.splitext(gff_file)[0]}.ids.retained.txt"
             for gff_file in args.gff_files
         ]
         generate_upset_plot(
