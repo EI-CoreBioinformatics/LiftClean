@@ -151,7 +151,7 @@ class FilterLiftonLiftoff:
 
     def process_gff(self, gff_file, label):
         corrected = os.path.join(self.output, f"{label}.corrected.gff")
-        corrected_log = os.path.join(self.output, f"gff_strand_checker_{label}.log")
+        corrected_log = os.path.join(self.output, f"{label}.corrected.gff_strand_checker.log")
         corrected_gffread = os.path.join(self.output, f"{label}.corrected.gffread.gff")
         sorted_gff = os.path.join(self.output, f"{label}.sorted.gff")
         sorted_gff_log = os.path.join(self.output, f"{label}.sorted.gff.log")
@@ -191,19 +191,19 @@ class FilterLiftonLiftoff:
         logging.info(
             f"Running mikado prepare on {label} GFF file (min cDNA length {self.args.minimum_cdna_length})"
         )
-        cmd = f"mikado prepare --fasta {self.genome} --minimum-cdna-length {self.args.minimum_cdna_length} -p {self.args.threads} -od {mikado_dir} -o {f'mikado_prepared_{label}.gtf'} -l {mikado_log} {sorted_gff}"
+        cmd = f"mikado prepare --fasta {self.genome} --minimum-cdna-length {self.args.minimum_cdna_length} -p {self.args.threads} -od {mikado_dir} -o {f'mikado_prepare_{label}.gtf'} -of {f'mikado_prepare_{label}.fasta'} -l {mikado_log} {sorted_gff}"
         if (
-            not os.path.isfile(os.path.join(mikado_dir, f"mikado_prepared_{label}.gtf"))
+            not os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf"))
             or self.debug
         ):
             self.process_cmd(cmd)
         else:
             logging.info(
-                f"Skipping mikado prepare, {os.path.join(mikado_dir, f'mikado_prepared_{label}.gtf')} already exists"
+                f"Skipping mikado prepare, {os.path.join(mikado_dir, f'mikado_prepare_{label}.gtf')} already exists"
             )
-        if not os.path.isfile(os.path.join(mikado_dir, f"mikado_prepared_{label}.gtf")):
+        if not os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf")):
             logging.error(
-                f"Mikado GTF file {os.path.join(mikado_dir, f'mikado_prepared_{label}.gtf')} not created"
+                f"Mikado GTF file {os.path.join(mikado_dir, f'mikado_prepare_{label}.gtf')} not created"
             )
             sys.exit(1)
 
@@ -244,7 +244,7 @@ class FilterLiftonLiftoff:
             f"mikado_prepare_{label}",
             f"mikado_prepare_{label}_summary_stats.csv",
         )
-        corrected_log = os.path.join(self.output, f"gff_strand_checker_{label}.log")
+        corrected_log = os.path.join(self.output, f"{label}.corrected.gff_strand_checker.log")
 
         start_append = False
         new_summary_lines = []
