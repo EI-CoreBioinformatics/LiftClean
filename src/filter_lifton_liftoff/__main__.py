@@ -70,7 +70,9 @@ class FilterLiftonLiftoff:
     def __init__(self, args):
         self.args = args
         self.output = None
+        self.analysis_dir = None
         self.prefix = None
+        self.force = self.args.force
         self.debug = self.args.debug
         self.did_lifton = False
         self.did_liftoff = False
@@ -91,7 +93,7 @@ class FilterLiftonLiftoff:
             logging.error(f"Liftoff GFF file {self.args.liftoff_gff} not found")
             sys.exit(1)
         # remove output directory if it exists and --force is enabled
-        if os.path.isdir(self.args.output) and self.debug:
+        if os.path.isdir(self.args.output) and self.force:
             logging.info(
                 f"Output directory {self.args.output} exists, removing it due to --force option"
             )
@@ -102,6 +104,11 @@ class FilterLiftonLiftoff:
             os.makedirs(self.args.output, exist_ok=True)
 
         self.output = os.path.abspath(self.args.output)
+
+        self.analysis_dir = os.path.join(self.output, "analysis")
+        if not os.path.isdir(self.analysis_dir):
+            logging.info(f"Creating analysis directory {self.analysis_dir}")
+            os.makedirs(self.analysis_dir, exist_ok=True)
 
         if self.args.single:
             logging.info("Single GFF mode enabled")
@@ -150,16 +157,16 @@ class FilterLiftonLiftoff:
         logging.info(f"Output will be saved to {self.output}")
 
     def process_gff(self, gff_file, label):
-        corrected = os.path.join(self.output, f"{label}.corrected.gff")
-        corrected_log = os.path.join(self.output, f"{label}.corrected.gff_strand_checker.log")
-        corrected_gffread = os.path.join(self.output, f"{label}.corrected.gffread.gff")
-        sorted_gff = os.path.join(self.output, f"{label}.sorted.gff")
-        sorted_gff_log = os.path.join(self.output, f"{label}.sorted.gff.log")
-        mikado_dir = os.path.join(self.output, f"mikado_prepare_{label}")
+        corrected = os.path.join(self.analysis_dir, f"{label}.corrected.gff")
+        corrected_log = os.path.join(self.analysis_dir, f"{label}.corrected.gff_strand_checker.log")
+        corrected_gffread = os.path.join(self.analysis_dir, f"{label}.corrected.gffread.gff")
+        sorted_gff = os.path.join(self.analysis_dir, f"{label}.sorted.gff")
+        sorted_gff_log = os.path.join(self.analysis_dir, f"{label}.sorted.gff.log")
+        mikado_dir = os.path.join(self.analysis_dir, f"mikado_prepare_{label}")
         mikado_log = os.path.join(mikado_dir, f"mikado_prepare_{label}.log")
 
         logging.info(f"Strand-checking {label} GFF file")
-        cmd = f"gff_strand_checker --check_parent_seq_id --remove {gff_file} > {corrected_log}"
+        cmd = f"gff_strand_checker --check_parent_seq_id --remove {gff_file} --output_dir {self.analysis_dir} > {corrected_log}"
         if not os.path.isfile(corrected) or self.debug:
             self.process_cmd(cmd)
         else:
@@ -222,13 +229,13 @@ class FilterLiftonLiftoff:
         """
         if self.args.single:
             if self.did_lifton:
-                cmd = f"parse_prepare_log {os.path.join(self.output, 'mikado_prepare_lifton', 'mikado_prepare_lifton.log')} --title 'Rejected Transcripts lifton' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
+                cmd = f"parse_prepare_log {os.path.join(self.analysis_dir, 'mikado_prepare_lifton', 'mikado_prepare_lifton.log')} --title 'Rejected Transcripts lifton' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
                 self.process_cmd(cmd)
             else:
-                cmd = f"parse_prepare_log {os.path.join(self.output, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff.log')} --title 'Rejected Transcripts liftoff' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
+                cmd = f"parse_prepare_log {os.path.join(self.analysis_dir, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff.log')} --title 'Rejected Transcripts liftoff' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
                 self.process_cmd(cmd)
         else:
-            cmd = f"parse_prepare_log {os.path.join(self.output, 'mikado_prepare_lifton', 'mikado_prepare_lifton.log')} {os.path.join(self.output, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff.log')} --title 'Rejected Transcripts lifton and liftoff' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
+            cmd = f"parse_prepare_log {os.path.join(self.analysis_dir, 'mikado_prepare_lifton', 'mikado_prepare_lifton.log')} {os.path.join(self.analysis_dir, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff.log')} --title 'Rejected Transcripts lifton and liftoff' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
             self.process_cmd(cmd)
 
     def append_strand_summary(self, label):
@@ -240,11 +247,11 @@ class FilterLiftonLiftoff:
         )
 
         summary_stats_csv = os.path.join(
-            self.output,
+            self.analysis_dir,
             f"mikado_prepare_{label}",
             f"mikado_prepare_{label}_summary_stats.csv",
         )
-        corrected_log = os.path.join(self.output, f"{label}.corrected.gff_strand_checker.log")
+        corrected_log = os.path.join(self.analysis_dir, f"{label}.corrected.gff_strand_checker.log")
 
         start_append = False
         new_summary_lines = []
@@ -296,13 +303,13 @@ class FilterLiftonLiftoff:
         """
         if self.args.single:
             if self.did_lifton:
-                cmd = f"plot_summary_csvs { os.path.join(self.output, f"mikado_prepare_lifton", f"mikado_prepare_lifton_summary_stats.csv")} --title 'Rejected Transcripts lifton {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
+                cmd = f"plot_summary_csvs { os.path.join(self.analysis_dir, f"mikado_prepare_lifton", f"mikado_prepare_lifton_summary_stats.csv")} --title 'Rejected Transcripts lifton {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
                 self.process_cmd(cmd)
             else:
-                cmd = f"plot_summary_csvs { os.path.join(self.output, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_summary_stats.csv")} --title 'Rejected Transcripts liftoff {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
+                cmd = f"plot_summary_csvs { os.path.join(self.analysis_dir, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_summary_stats.csv")} --title 'Rejected Transcripts liftoff {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
                 self.process_cmd(cmd)
         else:
-            cmd = f"plot_summary_csvs {os.path.join(self.output, 'mikado_prepare_lifton', 'mikado_prepare_lifton_summary_stats.csv')} {os.path.join(self.output, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff_summary_stats.csv')} --title 'Comparison of Rejected Transcripts {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
+            cmd = f"plot_summary_csvs {os.path.join(self.analysis_dir, 'mikado_prepare_lifton', 'mikado_prepare_lifton_summary_stats.csv')} {os.path.join(self.analysis_dir, 'mikado_prepare_liftoff', 'mikado_prepare_liftoff_summary_stats.csv')} --title 'Comparison of Rejected Transcripts {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
             self.process_cmd(cmd)
 
     def compare_parsed_summary_csv(self):
@@ -312,21 +319,21 @@ class FilterLiftonLiftoff:
         if self.args.single:
             logging.info("Running compare_parsed_summary_csv.py (single)")
             if self.did_lifton:
-                cmd = f"compare_parsed_summary_csv --single --gff_file {self.lifton_sorted_gff} --csv_file {os.path.join(self.output, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} --rm_prefix '1_' --output {self.output} --exclude '{self.args.exclude}'"
+                cmd = f"compare_parsed_summary_csv --single --gff_file {self.lifton_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} --rm_prefix '1_' --output {self.output} --exclude '{self.args.exclude}'"
                 self.process_cmd(cmd)
             else:
-                cmd = f"compare_parsed_summary_csv --single --gff_file {self.liftoff_sorted_gff} --csv_file {os.path.join(self.output, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --output {self.output} --exclude '{self.args.exclude}'"
+                cmd = f"compare_parsed_summary_csv --single --gff_file {self.liftoff_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --output {self.output} --exclude '{self.args.exclude}'"
                 self.process_cmd(cmd)
         else:
             logging.info("Running compare_parsed_summary_csv.py (paired)")
-            cmd = f"compare_parsed_summary_csv --gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} --csv_files {os.path.join(self.output, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} {os.path.join(self.output, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --labels lifton,liftoff --output_prefix {self.prefix} --output {self.output} --plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' --exclude '{self.args.exclude}'"
+            cmd = f"compare_parsed_summary_csv --gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} --csv_files {os.path.join(self.analysis_dir, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} {os.path.join(self.analysis_dir, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --labels lifton,liftoff --output_prefix {self.prefix} --output {self.output} --plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' --exclude '{self.args.exclude}'"
             self.process_cmd(cmd)
 
     def extract_gene_id_gff(self, label):
         """
         Running extract_gene_id_gff for retained IDs
         """
-        id_file = os.path.join(self.output, f"{label}.sorted.ids.retained.txt")
+        id_file = os.path.join(self.analysis_dir, f"{label}.sorted.ids.retained.txt")
         out_tsv = os.path.join(self.output, f"{label}.sorted.ids.retained.tsv")
         logging.info(f"Running extract_gene_id_gff for {label}")
         cmd = None
@@ -516,6 +523,11 @@ def main():
         type=int,
         default=48,
         help="Provide minimum cDNA length for filtering [default:%(default)s]",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Enable this option to force removal of pre-existing output folder [default:%(default)s]",
     )
     parser.add_argument(
         "-d",
