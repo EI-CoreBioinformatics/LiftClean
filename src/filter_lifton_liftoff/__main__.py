@@ -56,8 +56,8 @@ help_text_note = f"""
 Note:
   - In --single mode, you must provide exactly one of --lifton_gff or --liftoff_gff.
   - In paired mode, both --lifton_gff and --liftoff_gff are required.
-  - The script will symlink input files into the output directory, the output directory is also used as a prefix.
-  - Filtering is based on Mikado Prepare identified errors, categories of errors can be excluded i.e. not filtered via --exclude. Full list of categories can be found below:
+  - The script will symlink input files into the output directory.
+  - Filtering is based on Mikado Prepare identified errors. Categories of errors can be excluded i.e. not filtered via --exclude_from_filtering. Full list of categories can be found below:
     {',\n\t'.join(EXCLUDED_CATEGORIES)}
   - The script assumes the presence of external tools:
       - gffread
@@ -158,8 +158,12 @@ class FilterLiftonLiftoff:
 
     def process_gff(self, gff_file, label):
         corrected = os.path.join(self.analysis_dir, f"{label}.corrected.gff")
-        corrected_log = os.path.join(self.analysis_dir, f"{label}.corrected.gff_strand_checker.log")
-        corrected_gffread = os.path.join(self.analysis_dir, f"{label}.corrected.gffread.gff")
+        corrected_log = os.path.join(
+            self.analysis_dir, f"{label}.corrected.gff_strand_checker.log"
+        )
+        corrected_gffread = os.path.join(
+            self.analysis_dir, f"{label}.corrected.gffread.gff"
+        )
         sorted_gff = os.path.join(self.analysis_dir, f"{label}.sorted.gff")
         sorted_gff_log = os.path.join(self.analysis_dir, f"{label}.sorted.gff.log")
         mikado_dir = os.path.join(self.analysis_dir, f"mikado_prepare_{label}")
@@ -251,7 +255,9 @@ class FilterLiftonLiftoff:
             f"mikado_prepare_{label}",
             f"mikado_prepare_{label}_summary_stats.csv",
         )
-        corrected_log = os.path.join(self.analysis_dir, f"{label}.corrected.gff_strand_checker.log")
+        corrected_log = os.path.join(
+            self.analysis_dir, f"{label}.corrected.gff_strand_checker.log"
+        )
 
         start_append = False
         new_summary_lines = []
@@ -319,14 +325,14 @@ class FilterLiftonLiftoff:
         if self.args.single:
             logging.info("Running compare_parsed_summary_csv.py (single)")
             if self.did_lifton:
-                cmd = f"compare_parsed_summary_csv --single --gff_file {self.lifton_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} --rm_prefix '1_' --output {self.output} --exclude '{self.args.exclude}'"
+                cmd = f"compare_parsed_summary_csv --single --gff_file {self.lifton_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} --rm_prefix '1_' --output {self.output} --exclude '{self.args.exclude_from_filtering}'"
                 self.process_cmd(cmd)
             else:
-                cmd = f"compare_parsed_summary_csv --single --gff_file {self.liftoff_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --output {self.output} --exclude '{self.args.exclude}'"
+                cmd = f"compare_parsed_summary_csv --single --gff_file {self.liftoff_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --output {self.output} --exclude '{self.args.exclude_from_filtering}'"
                 self.process_cmd(cmd)
         else:
             logging.info("Running compare_parsed_summary_csv.py (paired)")
-            cmd = f"compare_parsed_summary_csv --gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} --csv_files {os.path.join(self.analysis_dir, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} {os.path.join(self.analysis_dir, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --labels lifton,liftoff --output_prefix {self.prefix} --output {self.output} --plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' --exclude '{self.args.exclude}'"
+            cmd = f"compare_parsed_summary_csv --gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} --csv_files {os.path.join(self.analysis_dir, f"mikado_prepare_lifton", f"mikado_prepare_lifton_parsed_summary.csv")} {os.path.join(self.analysis_dir, f"mikado_prepare_liftoff", f"mikado_prepare_liftoff_parsed_summary.csv")} --rm_prefix '1_' --labels lifton,liftoff --output_prefix {self.prefix} --output {self.output} --plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' --exclude '{self.args.exclude_from_filtering}'"
             self.process_cmd(cmd)
 
     def extract_gene_id_gff(self, label):
@@ -487,34 +493,30 @@ def main():
         "--prefix",
         help="Provide a label for plot titles to distinguish images from multiple runs. If not provided, defaults to base name of the --output. For example, you can use 'Wheat_Accession1' or 'SpeciesX' [default:%(default)s]",
     )
-    # --output directory
     parser.add_argument(
         "-o",
         "--output",
         default="output",
         help="Provide output directory [default:%(default)s]",
     )
-    # --single
     parser.add_argument(
         "-s",
         "--single",
         action="store_true",
         help="Only one GFF allowed. Default is to process both --lifton_gff and --liftoff_gff inputs [default:%(default)s]",
     )
-    # add threads option
     parser.add_argument(
         "-t",
         "--threads",
         default=1,
         help="Number of threads to use for copying",
     )
-    # --exclude
     parser.add_argument(
         "-e",
-        "--exclude",
+        "--exclude_from_filtering",
         type=str,
         default="",
-        help="Provide a comma-separated list of types to exclude from processing. Exclude categories (default: none, e.g. 'Size under minimum,Redundant' etc [default:%(default)s]",
+        help="Provide a comma-separated list of types to be excluded from being filtered (default: none, e.g. 'Size under minimum,Redundant' etc [default:%(default)s]",
     )
     # --minimum-cdna-length
     parser.add_argument(
