@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
+
 def main():
     # Argument parsing
     parser = argparse.ArgumentParser(
@@ -62,7 +63,9 @@ def main():
     }
 
     # Prepare the summary DataFrame
-    summary_data = defaultdict(lambda: defaultdict(int))  # sample -> subcategory -> count
+    summary_data = defaultdict(
+        lambda: defaultdict(int)
+    )  # sample -> subcategory -> count
 
     for csv_path in args.summary_csvs:
         if not os.path.isfile(csv_path):
@@ -76,7 +79,12 @@ def main():
             continue
 
         # Derive sample name from filename
-        sample = os.path.basename(csv_path).replace("_summary_stats.csv", "")
+        # Remove "_summary_stats.csv" or "mikado_prepare_" if present from the file name for labeling
+        sample = (
+            os.path.basename(csv_path)
+            .replace("_summary_stats.csv", "")
+            .replace("mikado_prepare_", "")
+        )
 
         for _, row in df.iterrows():
             subcat = row.get("SubCategory", "Unknown")
@@ -137,6 +145,7 @@ def main():
     out_path = os.path.join(os.path.abspath(args.output), f"{args.output_prefix}.png")
     plt.savefig(out_path, bbox_inches="tight")  # ensure legend is included
     print(f"Plot saved to '{out_path}'")
+
 
 if __name__ == "__main__":
     main()

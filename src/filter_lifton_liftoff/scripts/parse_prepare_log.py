@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
 
+
 def main():
     # Setup argument parser
     parser = argparse.ArgumentParser(
@@ -158,7 +159,6 @@ def main():
         ],
     }
 
-
     # Function to classify each line
     def classify_line(line, stats, unique_tid_counts, log_entries):
         entry = {"Category": None, "SubCategory": None, "Message": line, "tid": None}
@@ -198,7 +198,6 @@ def main():
         stats[key] += 1  # Increment the count for General category
         log_entries.append(entry)
 
-
     # Data structure to collect plot data
     plot_data = defaultdict(lambda: defaultdict(int))
 
@@ -209,9 +208,15 @@ def main():
             continue
 
         summary_output_dir = os.path.dirname(os.path.abspath(log_file_path))
-        # Remove ".prepare.log" suffix if present from the file name for labeling
-        base_name = os.path.splitext(os.path.basename(log_file_path))[0].replace(
-            ".prepare", ""
+        # Remove ".prepare.log", ".log" or "mikado_prepare_" if present from the file name for labeling
+        plot_base_name = (
+            os.path.splitext(os.path.basename(log_file_path))[0]
+            .replace(".prepare", "")
+            .replace(".log", "")
+            .replace("mikado_prepare_", "")
+        )
+        file_base_name = os.path.splitext(os.path.basename(log_file_path))[0].replace(
+            ".log", ""
         )
 
         stats = {key: 0 for key in all_combinations}
@@ -225,11 +230,15 @@ def main():
         # Populate plot_data for plotting
         for key, value in stats.items():
             category, subcategory = key
-            plot_data[base_name][subcategory] = value
+            plot_data[plot_base_name][subcategory] = value
 
         # Define output paths for parsed summary and summary statistics
-        output_file_path = os.path.join(summary_output_dir, f"{base_name}_parsed_summary.csv")
-        summary_file_path = os.path.join(summary_output_dir, f"{base_name}_summary_stats.csv")
+        output_file_path = os.path.join(
+            summary_output_dir, f"{file_base_name}_parsed_summary.csv"
+        )
+        summary_file_path = os.path.join(
+            summary_output_dir, f"{file_base_name}_summary_stats.csv"
+        )
 
         # Write parsed log entries to CSV
         with open(output_file_path, "w", newline="") as csvfile:
@@ -263,7 +272,7 @@ def main():
                 summary_writer.writerow([key[0], key[1], count, unique_tid_count])
 
                 # Collect data for plotting
-                plot_data[base_name][key[1]] = count
+                plot_data[plot_base_name][key[1]] = count
 
             # Add totals for all categories
             total_count = sum(stats.values())
@@ -342,6 +351,7 @@ def main():
     plt.savefig(output_plot_file)
 
     print(f"Plot saved to '{output_plot_file}'")
+
 
 if __name__ == "__main__":
     main()
