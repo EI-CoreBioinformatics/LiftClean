@@ -10,10 +10,6 @@ import argparse
 import logging
 import shutil
 
-__author__ = "David Swarbreck"
-__maintainer__ = "Gemy George Kaithakottil"
-__email__ = "David.Swarbreck@earlham.ac.uk"
-
 script = os.path.basename(sys.argv[0])
 executed_command = " ".join(sys.argv)
 
@@ -48,9 +44,9 @@ EXCLUDED_CATEGORIES = [
     "Assertion failure",
     "Redundant",
     "Seqid mismatch",
-    "Strand conflict child",
-    "Strand conflict gene",
-    "Short intron",
+    "Strand conflict child*",
+    "Strand conflict gene*",
+    "Short intron*",
 ]
 
 help_text_note = f"""
@@ -60,7 +56,9 @@ Note:
   - The script will symlink input files into the output directory.
   - Filtering is based on Mikado Prepare identified errors. Categories of errors can be excluded i.e. not filtered via --exclude_from_filtering. Full list of categories can be found below:
     {',\n\t'.join(EXCLUDED_CATEGORIES)}
-  - The script assumes the presence of external tools:
+    * Categories marked with * cannot be excluded from being filtered.
+
+   - The script assumes the presence of external tools:
       - gffread
       - gt (GenomeTools)
       - mikado
@@ -548,7 +546,7 @@ def main():
         description="""
         Lifton/Liftoff transcript filtering and comparison pipeline
         """,
-        epilog=f"{help_text_note}\nContact: {__author__} ({__email__})",
+        epilog=f"{help_text_note}\n",
     )
     parser.add_argument(
         "-g",
@@ -619,14 +617,14 @@ def main():
         "--minimum_cdna_length",
         type=int,
         default=48,
-        help="Provide minimum cDNA length for filtering [default:%(default)s]",
+        help="Provide minimum cDNA length for filtering. Anything lower will be excluded [default: %(default)s]",
     )
     parser.add_argument(
         "-i",
         "--min_intron_length",
         type=int,
         default=1,
-        help="Provide minimum intron length to filter models with short introns [default:%(default)s]",
+        help="Provide intron size. Any models with intron size under this value will be removed [default: %(default)s]",
     )
     # add gffread params
     parser.add_argument(

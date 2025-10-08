@@ -2,6 +2,10 @@
 name = "filter-lifton-liftoff"
 version = "0.1.0"
 description = "Lifton/Liftoff transcript filtering and comparison pipeline"
+authors = [
+    {name = "David Swarbreck", email = "David.Swarbreck@earlham.ac.uk"},
+    {name = "Gemy George Kaithakottil", email = "Gemy.Kaithakottil@earlham.ac.uk"}
+]
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
 license = {text = "GNU General Public License v3.0"}
