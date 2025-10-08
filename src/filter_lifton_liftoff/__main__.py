@@ -127,6 +127,20 @@ class FilterLiftonLiftoff:
                 )
                 sys.exit(1)
 
+        # enable self.args.single mode even if --single is not provided but only one GFF is given
+        if not self.args.single:
+            if self.args.lifton_gff and not self.args.liftoff_gff:
+                logging.warning("Only Lifton GFF file provided, enabling --single mode")
+                self.args.single = True
+            elif self.args.liftoff_gff and not self.args.lifton_gff:
+                logging.warning(
+                    "Only Liftoff GFF file provided, enabling --single mode"
+                )
+                self.args.single = True
+            elif not self.args.lifton_gff and not self.args.liftoff_gff:
+                logging.error("No GFF files provided. Please provide at least one.")
+                sys.exit(1)
+
         if self.args.alt_lifton_label:
             self.lifton_label = self.args.alt_lifton_label
         if self.args.alt_liftoff_label:
