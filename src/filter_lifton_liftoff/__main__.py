@@ -410,7 +410,7 @@ class FilterLiftonLiftoff:
         out_tsv = os.path.join(self.output, f"{label}.sorted.ids.retained.tsv")
         logging.info(f"Running extract_gene_id_gff for {label}")
         cmd = None
-        if label == "lifton":
+        if label == self.lifton_label:
             cmd = f"extract_gene_id_gff {id_file} {self.lifton_sorted_gff} {out_tsv}"
         else:
             cmd = f"extract_gene_id_gff {id_file} {self.liftoff_sorted_gff} {out_tsv}"
@@ -424,7 +424,7 @@ class FilterLiftonLiftoff:
         out_gff = os.path.join(self.output, f"{label}.sorted.retained.gff")
         logging.info(f"Running mikado util grep for {label}")
         cmd = None
-        if label == "lifton":
+        if label == self.lifton_label:
             cmd = f"mikado util grep {tsv_file} {self.lifton_sorted_gff} {out_gff}"
         else:
             cmd = f"mikado util grep {tsv_file} {self.liftoff_sorted_gff} {out_gff}"

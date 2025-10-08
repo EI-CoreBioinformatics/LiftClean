@@ -59,7 +59,7 @@ def main():
         "Seqid mismatch": "#1b9e77",
         "Strand conflict child": "#d95f02",
         "Strand conflict gene": "#7570b3",
-        "Short intron": "#e7298a",
+        "Short intron": "#e6ab02",
         "General": "#5A5A5A",
     }
 
