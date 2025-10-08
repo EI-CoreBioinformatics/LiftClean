@@ -238,7 +238,9 @@ class FilterLiftonLiftoff:
         if not os.path.isfile(intron_corrected):
             self.process_cmd(cmd)
         if os.path.isfile(intron_corrected) and self.debug:
-            logging.debug(f"Skipping intron filtering, {intron_corrected} already exists")
+            logging.debug(
+                f"Skipping intron filtering, {intron_corrected} already exists"
+            )
         if not os.path.isfile(intron_corrected):
             logging.error(f"Intron-corrected GFF file {intron_corrected} not created")
             sys.exit(1)
@@ -267,11 +269,12 @@ class FilterLiftonLiftoff:
             f"Running mikado prepare on {label} GFF file (min cDNA length {self.args.minimum_cdna_length})"
         )
         cmd = f"mikado prepare --fasta {self.genome} --minimum-cdna-length {self.args.minimum_cdna_length} -p {self.args.threads} -od {mikado_dir} -o {f'mikado_prepare_{label}.gtf'} -of {f'mikado_prepare_{label}.fasta'} -l {mikado_log} {self.args.mikado_prepare_params} {sorted_gff}"
-        if (
-            not os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf"))
-        ):
+        if not os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf")):
             self.process_cmd(cmd)
-        if os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf")) and self.debug:
+        if (
+            os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf"))
+            and self.debug
+        ):
             logging.debug(
                 f"Skipping mikado prepare, {os.path.join(mikado_dir, f'mikado_prepare_{label}.gtf')} already exists"
             )
@@ -631,19 +634,22 @@ def main():
     parser.add_argument(
         "--gffread_params",
         default="--keep-genes -F",
-        help='Additional parameters to pass to gffread (enclosed in quotes). Only modify defaults if you know what you are doing [default:"%(default)s"]',
+        type=str,
+        help='Additional parameters to pass to gffread (enclosed in quotes). Only modify defaults if you know what you are doing. MUST use the assignment format --gffread_params="<params>" [default:"%(default)s"]',
     )
     # gt gff3 params
     parser.add_argument(
         "--gt_gff3_params",
         default="-sort -tidy -retainids yes",
-        help='Additional parameters to pass to gt (enclosed in quotes). Only modify defaults if you know what you are doing [default:"%(default)s"]',
+        type=str,
+        help='Additional parameters to pass to gt (enclosed in quotes). Only modify defaults if you know what you are doing. MUST use the assignment format --gt_gff3_params="<params>" [default:"%(default)s"]',
     )
     # mikado prepare params
     parser.add_argument(
         "--mikado_prepare_params",
         default="",
-        help='Additional parameters to pass to mikado (enclosed in quotes). Only modify defaults if you know what you are doing [default:"%(default)s"]',
+        type=str,
+        help='Additional parameters to pass to mikado (enclosed in quotes). Only modify defaults if you know what you are doing. MUST use the assignment format --mikado_prepare_params="<params>" [default:"%(default)s"]',
     )
     parser.add_argument(
         "--force",
