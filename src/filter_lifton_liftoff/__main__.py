@@ -83,6 +83,10 @@ class FilterLiftonLiftoff:
         self.lifton_gff = None
         self.liftoff_gff = None
 
+        if self.debug:
+            logging.getLogger().setLevel(logging.DEBUG)
+            logging.debug("Debug mode enabled")
+
         # check if input and output files/directories exist
         if not os.path.isfile(self.args.genome_fasta):
             logging.error(f"Reference genome file {self.args.genome_fasta} not found")
@@ -219,10 +223,10 @@ class FilterLiftonLiftoff:
 
         logging.info(f"Strand-checking {label} GFF file")
         cmd = f"gff_strand_checker --check_parent_seq_id --remove {gff_file} --output_dir {self.analysis_dir} > {corrected_log}"
-        if not os.path.isfile(corrected) or self.debug:
+        if not os.path.isfile(corrected):
             self.process_cmd(cmd)
-        else:
-            logging.info(f"Skipping strand-checking, {corrected} already exists")
+        if os.path.isfile(corrected) and self.debug:
+            logging.debug(f"Skipping strand-checking, {corrected} already exists")
         if not os.path.isfile(corrected):
             logging.error(f"Corrected GFF file {corrected} not created")
             sys.exit(1)
@@ -231,32 +235,30 @@ class FilterLiftonLiftoff:
             f"Filtering models with introns <= {self.args.min_intron_length} bp"
         )
         cmd = f"filter_short_introns --intron_size {self.args.min_intron_length} --intron_size_ends {self.args.min_intron_length} --detailed_discard_list_file {intron_corrected_tsv} --discard_list_mapping_file {intron_corrected_mapping_tsv} {corrected} --output {intron_corrected}"
-        if not os.path.isfile(intron_corrected) or self.debug:
+        if not os.path.isfile(intron_corrected):
             self.process_cmd(cmd)
-        else:
-            logging.info(
-                f"Skipping intron filtering, {intron_corrected} already exists"
-            )
+        if os.path.isfile(intron_corrected) and self.debug:
+            logging.debug(f"Skipping intron filtering, {intron_corrected} already exists")
         if not os.path.isfile(intron_corrected):
             logging.error(f"Intron-corrected GFF file {intron_corrected} not created")
             sys.exit(1)
 
         logging.info(f"Running gffread on {label} GFF file")
         cmd = f"gffread {self.args.gffread_params} -o {corrected_gffread} {intron_corrected}"
-        if not os.path.isfile(corrected_gffread) or self.debug:
+        if not os.path.isfile(corrected_gffread):
             self.process_cmd(cmd)
-        else:
-            logging.info(f"Skipping gffread, {corrected_gffread} already exists")
+        if os.path.isfile(corrected_gffread) and self.debug:
+            logging.debug(f"Skipping gffread, {corrected_gffread} already exists")
         if not os.path.isfile(corrected_gffread):
             logging.error(f"Corrected GFFREAD file {corrected_gffread} not created")
             sys.exit(1)
 
         logging.info(f"Sorting {label} GFF file")
         cmd = f"gt gff3 {self.args.gt_gff3_params} {corrected_gffread} > {sorted_gff} 2> {sorted_gff_log}"
-        if not os.path.isfile(sorted_gff) or self.debug:
+        if not os.path.isfile(sorted_gff):
             self.process_cmd(cmd)
-        else:
-            logging.info(f"Skipping sorting, {sorted_gff} already exists")
+        if os.path.isfile(sorted_gff) and self.debug:
+            logging.debug(f"Skipping sorting, {sorted_gff} already exists")
         if not os.path.isfile(sorted_gff) or os.path.getsize(sorted_gff) == 0:
             logging.error(f"Sorted GFF file {sorted_gff} not created or empty")
             sys.exit(1)
@@ -267,11 +269,10 @@ class FilterLiftonLiftoff:
         cmd = f"mikado prepare --fasta {self.genome} --minimum-cdna-length {self.args.minimum_cdna_length} -p {self.args.threads} -od {mikado_dir} -o {f'mikado_prepare_{label}.gtf'} -of {f'mikado_prepare_{label}.fasta'} -l {mikado_log} {self.args.mikado_prepare_params} {sorted_gff}"
         if (
             not os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf"))
-            or self.debug
         ):
             self.process_cmd(cmd)
-        else:
-            logging.info(
+        if os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf")) and self.debug:
+            logging.debug(
                 f"Skipping mikado prepare, {os.path.join(mikado_dir, f'mikado_prepare_{label}.gtf')} already exists"
             )
         if not os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf")):
