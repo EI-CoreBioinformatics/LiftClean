@@ -70,7 +70,9 @@ def parse_summary_csv(csv_files, exclude_types, rm_prefix):
 
 def generate_retained_lists(gff_ids_files, rejected_ids_files):
     for gff_ids_file, rejected_ids_file in zip(gff_ids_files, rejected_ids_files):
-        retained_output_file = f"{os.path.splitext(os.path.splitext(gff_ids_file)[0])[0]}.ids.retained.txt"
+        retained_output_file = (
+            f"{os.path.splitext(os.path.splitext(gff_ids_file)[0])[0]}.ids.retained.txt"
+        )
         gff_ids = set()
         rejected_ids = set()
 
@@ -284,15 +286,17 @@ def main():
         parse_gff(args.gff_files, features)
         parse_summary_csv(args.csv_files, exclude_types, rm_prefix)
 
-        gff_ids_files = [f"{os.path.splitext(gff_file)[0]}.ids.tsv"
-            for gff_file in args.gff_files
+        gff_ids_files = [
+            f"{os.path.splitext(gff_file)[0]}.ids.tsv" for gff_file in args.gff_files
         ]
-        rejected_ids_files = [f"{os.path.splitext(csv_file)[0]}.ids.rejected.txt"
+        rejected_ids_files = [
+            f"{os.path.splitext(csv_file)[0]}.ids.rejected.txt"
             for csv_file in args.csv_files
         ]
         generate_retained_lists(gff_ids_files, rejected_ids_files)
 
-        retained_ids_files = [f"{os.path.splitext(gff_file)[0]}.ids.retained.txt"
+        retained_ids_files = [
+            f"{os.path.splitext(gff_file)[0]}.ids.retained.txt"
             for gff_file in args.gff_files
         ]
         generate_upset_plot(
