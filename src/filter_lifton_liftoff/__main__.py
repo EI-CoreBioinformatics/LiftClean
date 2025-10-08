@@ -50,6 +50,7 @@ EXCLUDED_CATEGORIES = [
     "Seqid mismatch",
     "Strand conflict child",
     "Strand conflict gene",
+    "Short intron",
 ]
 
 help_text_note = f"""
@@ -173,15 +174,34 @@ class FilterLiftonLiftoff:
         logging.info(f"Output will be saved to {self.output}")
 
     def process_gff(self, gff_file, label):
+
+        # strand checks
         corrected = os.path.join(self.analysis_dir, f"{label}.corrected.gff")
         corrected_log = os.path.join(
             self.analysis_dir, f"{label}.corrected.gff_strand_checker.log"
         )
+
+        # intron checks
+        intron_corrected = os.path.join(
+            self.analysis_dir, f"{label}.short_introns.corrected.gff"
+        )
+        intron_corrected_tsv = os.path.join(
+            self.analysis_dir, f"{label}.short_introns.tsv"
+        )
+        intron_corrected_mapping_tsv = os.path.join(
+            self.analysis_dir, f"{label}.short_introns.mapping.tsv"
+        )
+
+        # gffread
         corrected_gffread = os.path.join(
             self.analysis_dir, f"{label}.corrected.gffread.gff"
         )
+
+        # gt gff3
         sorted_gff = os.path.join(self.analysis_dir, f"{label}.sorted.gff")
         sorted_gff_log = os.path.join(self.analysis_dir, f"{label}.sorted.gff.log")
+
+        # mikado prepare
         mikado_dir = os.path.join(self.analysis_dir, f"mikado_prepare_{label}")
         mikado_log = os.path.join(mikado_dir, f"mikado_prepare_{label}.log")
 
@@ -195,8 +215,22 @@ class FilterLiftonLiftoff:
             logging.error(f"Corrected GFF file {corrected} not created")
             sys.exit(1)
 
+        logging.info(
+            f"Filtering models with introns <= {self.args.min_intron_length} bp"
+        )
+        cmd = f"filter_short_introns --intron_size {self.args.min_intron_length} --intron_size_ends {self.args.min_intron_length} --detailed_discard_list_file {intron_corrected_tsv} --discard_list_mapping_file {intron_corrected_mapping_tsv} {corrected} --output {intron_corrected}"
+        if not os.path.isfile(intron_corrected) or self.debug:
+            self.process_cmd(cmd)
+        else:
+            logging.info(
+                f"Skipping intron filtering, {intron_corrected} already exists"
+            )
+        if not os.path.isfile(intron_corrected):
+            logging.error(f"Intron-corrected GFF file {intron_corrected} not created")
+            sys.exit(1)
+
         logging.info(f"Running gffread on {label} GFF file")
-        cmd = f"gffread {self.args.gffread_params} -o {corrected_gffread} {corrected}"
+        cmd = f"gffread {self.args.gffread_params} -o {corrected_gffread} {intron_corrected}"
         if not os.path.isfile(corrected_gffread) or self.debug:
             self.process_cmd(cmd)
         else:
@@ -258,12 +292,12 @@ class FilterLiftonLiftoff:
             cmd = f"parse_prepare_log {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}.log')} {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}.log')} --title 'Rejected Transcripts {self.lifton_label} and {self.liftoff_label}' --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
             self.process_cmd(cmd)
 
-    def append_strand_summary(self, label):
+    def append_computed_summary(self, label):
         """
-        Append strand-check summary helper
+        Append strand-check and intron filtering summary
         """
         logging.info(
-            f"Appending strand-check summary for {label} to mikado_prepare_{label}_summary_stats.csv"
+            f"Appending strand-check and intron filtering summary for {label} to mikado_prepare_{label}_summary_stats.csv"
         )
 
         summary_stats_csv = os.path.join(
@@ -271,29 +305,46 @@ class FilterLiftonLiftoff:
             f"mikado_prepare_{label}",
             f"mikado_prepare_{label}_summary_stats.csv",
         )
-        corrected_log = os.path.join(
+        strand_corrected_log = os.path.join(
             self.analysis_dir, f"{label}.corrected.gff_strand_checker.log"
         )
+        intron_corrected_tsv = os.path.join(
+            self.analysis_dir, f"{label}.short_introns.tsv"
+        )
 
-        start_append = False
+        strand_append = False
         new_summary_lines = []
-        # check whether corrected_log has '^Category,SubCategory'
+        # check whether strand_corrected_log has '^Category,SubCategory'
         # if yes, skip header and append all lines until '^Checks complete' to list
-        with open(corrected_log, "r") as f:
+        with open(strand_corrected_log, "r") as f:
             for line in f:
                 if line.startswith("Category,SubCategory"):
-                    start_append = True
+                    strand_append = True
                     continue
                 if line.startswith("Checks complete"):
-                    start_append = False
+                    strand_append = False
                     break
-                if start_append:
+                if strand_append:
+                    new_summary_lines.append(line)
+
+        intron_append = False
+        # check whether intron_corrected_tsv has '^Category,SubCategory'
+        # if yes, skip header and append all lines until '^Checks complete' to list
+        with open(intron_corrected_tsv, "r") as f:
+            for line in f:
+                if line.startswith("Category,SubCategory"):
+                    intron_append = True
+                    continue
+                if line.startswith("Checks complete"):
+                    intron_append = False
+                    break
+                if intron_append:
                     new_summary_lines.append(line)
 
         # Save the original CSV body, skip header and drop existing Total, then recalculate totals
         if new_summary_lines:
             logging.info(
-                f"Prepending strand-check summary for {label} from {corrected_log} to {summary_stats_csv}"
+                f"Prepending strand-check and intron filter summary for {label} from {strand_corrected_log} and {intron_corrected_tsv} to {summary_stats_csv}"
             )
 
             with open(summary_stats_csv, "r") as f:
@@ -316,7 +367,7 @@ class FilterLiftonLiftoff:
                 f.write("\n")
         else:
             logging.warning(
-                f"No strand-check summary lines found in {corrected_log}, skipping append"
+                f"No strand-check and intron filter summary lines found in {strand_corrected_log} and {intron_corrected_tsv}, skipping append"
             )
 
     def regenerate_summary_plot(self):
@@ -437,9 +488,9 @@ class FilterLiftonLiftoff:
         # 9) Prepend strand-check summary & recalc Total
         #######################################
         if self.did_lifton:
-            self.append_strand_summary(label=self.lifton_label)
+            self.append_computed_summary(label=self.lifton_label)
         if self.did_liftoff:
-            self.append_strand_summary(label=self.liftoff_label)
+            self.append_computed_summary(label=self.liftoff_label)
 
         #######################################
         # 10) Regenerate summary plot
@@ -551,28 +602,35 @@ def main():
     # --minimum-cdna-length
     parser.add_argument(
         "-m",
-        "--minimum-cdna-length",
+        "--minimum_cdna_length",
         type=int,
         default=48,
         help="Provide minimum cDNA length for filtering [default:%(default)s]",
     )
-    # add gffread params, only modify defaults if you know what you're doing
+    parser.add_argument(
+        "-i",
+        "--min_intron_length",
+        type=int,
+        default=1,
+        help="Provide minimum intron length to filter models with short introns [default:%(default)s]",
+    )
+    # add gffread params
     parser.add_argument(
         "--gffread_params",
-        default = "--keep-genes -F",
-        help="Additional parameters to pass to gffread (enclosed in quotes). Only modify defaults if you know what you are doing [default:\"%(default)s\"]",
+        default="--keep-genes -F",
+        help='Additional parameters to pass to gffread (enclosed in quotes). Only modify defaults if you know what you are doing [default:"%(default)s"]',
     )
-    # gt gff3 params, only modify defaults if you know what you're doing
+    # gt gff3 params
     parser.add_argument(
         "--gt_gff3_params",
-        default = "-sort -tidy -retainids yes",
-        help="Additional parameters to pass to gt (enclosed in quotes). Only modify defaults if you know what you are doing [default:\"%(default)s\"]",
+        default="-sort -tidy -retainids yes",
+        help='Additional parameters to pass to gt (enclosed in quotes). Only modify defaults if you know what you are doing [default:"%(default)s"]',
     )
-    # mikado prepare params, only modify defaults if you know what you're doing
+    # mikado prepare params
     parser.add_argument(
         "--mikado_prepare_params",
-        default = "",
-        help="Additional parameters to pass to mikado (enclosed in quotes). Only modify defaults if you know what you are doing [default:\"%(default)s\"]",
+        default="",
+        help='Additional parameters to pass to mikado (enclosed in quotes). Only modify defaults if you know what you are doing [default:"%(default)s"]',
     )
     parser.add_argument(
         "--force",
