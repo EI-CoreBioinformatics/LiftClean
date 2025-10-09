@@ -649,8 +649,8 @@ def main():
         "-i",
         "--min_intron_length",
         type=int,
-        default=1,
-        help="Provide intron size. Any models with intron size under this value will be removed [default: %(default)s]",
+        default=0,
+        help="Provide intron size. Any models with intron size under this value will be removed. Bookended and overlapping exon features are merged with the default setting [default: %(default)s]",
     )
     # add gffread params
     parser.add_argument(

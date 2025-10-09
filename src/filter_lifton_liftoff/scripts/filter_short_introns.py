@@ -457,13 +457,13 @@ def main():
     )
     parser.add_argument(
         "--intron_size",
-        default=1,
+        default=0,
         type=int,
         help="Provide intron size. Any models with intron size under this value will be removed (default: < %(default)s)",
     )
     parser.add_argument(
         "--intron_size_ends",
-        default=1,
+        default=0,
         type=int,
         help="Provide intron size for ends. Any models with terminal intron size under this value will be removed (default: < %(default)s)",
     )
