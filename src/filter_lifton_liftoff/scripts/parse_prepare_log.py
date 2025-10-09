@@ -29,6 +29,12 @@ def main():
         help="Title for the generated plot.",
     )
     parser.add_argument(
+        "--rm_prefix",
+        type=str,
+        default="",
+        help="Prefix to remove when creating parsed summary CSV file",
+    )
+    parser.add_argument(
         "--output_prefix",
         type=str,
         default="summary_stacked_bar_plot",
@@ -43,6 +49,7 @@ def main():
 
     log_file_paths = args.log_files
     plot_title = args.title
+    rm_prefix = args.rm_prefix
     plot_output_base = os.path.join(os.path.abspath(args.output), args.output_prefix)
 
     # Define possible categories and subcategories
@@ -161,6 +168,7 @@ def main():
 
     # Function to classify each line
     def classify_line(line, stats, unique_tid_counts, log_entries):
+        line = line.replace(rm_prefix, "") if rm_prefix else line
         entry = {"Category": None, "SubCategory": None, "Message": line, "tid": None}
         tid = None
 
@@ -183,7 +191,7 @@ def main():
                 tid_match = re.search(tid_regex, line)
                 if tid_match:
                     tid = tid_match.group(1).strip("\"' ,.")
-                    entry["tid"] = tid
+                    entry["tid"] = tid.replace(rm_prefix, "") if rm_prefix and tid.startswith(rm_prefix) else tid
                 key = (entry["Category"], entry["SubCategory"])
                 stats[key] += 1
                 if tid:
@@ -281,7 +289,7 @@ def main():
                 ["Total", "All Categories", total_count, total_unique_tid_count]
             )
 
-        print(f"Parsing complete for {log_file_path}.")
+        print(f"Parsing complete for {log_file_path}")
         print(f"Extracted log information saved to {output_file_path}")
         print(f"Summary stats saved to {summary_file_path}")
 
