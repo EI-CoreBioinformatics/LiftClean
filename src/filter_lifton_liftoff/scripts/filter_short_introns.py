@@ -449,7 +449,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Script to filter GFF3 on intron size for GFF3 structure: [gene]->[mRNA]->[exon|CDS|five_prime_UTR|three_prime_UTR|five_prime_utr|three_prime_utr]"
     )
-    parser.add_argument("file", help="Provide GFF3 file")
+    parser.add_argument("file", help="Provide GFF3 file [required]")
     parser.add_argument(
         "--source",
         default=None,
@@ -476,20 +476,20 @@ def main():
     parser.add_argument(
         "--discard_list_mapping_file",
         required=True,
-        help="Output TSV mapping mrna_id to gene_id for qualifying introns (default: %(default)s)",
+        help="Output TSV mapping mrna_id to gene_id for qualifying introns [required] (default: %(default)s)",
     )
     # detailed dicard list file
     parser.add_argument(
         "--detailed_discard_list_file",
         required=True,
-        help="Output TSV listing introns meeting the filter criteria (default: %(default)s)",
+        help="Output TSV listing introns meeting the filter criteria [required] (default: %(default)s)",
     )
     # output file
     parser.add_argument(
         "-o",
         "--output",
         required=True,
-        help="Output GFF3 file (default: %(default)s)",
+        help="Output GFF3 file [required] (default: %(default)s)",
     )
 
     args = parser.parse_args()
