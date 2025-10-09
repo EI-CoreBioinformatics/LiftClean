@@ -62,8 +62,10 @@ def main():
         ("discarding", "CDS which straddles 2 different exons"),
         ("discarding", "Cannot reverse strand of coding transcript"),
         ("discarding", "Overlapping exons found"),
+        ("discarding", "Overlapping CDS"),
         ("discarding", "Invalid number of coding exons"),
         ("discarding", "Invalid start and stop of the ORF"),
+        ("discarding", "Invalid CDS length"),
         ("discarding", "Debords its exon"),
         ("discarding", "5'UTR present with a truncated ORF"),
         ("discarding", "General"),
@@ -125,6 +127,11 @@ def main():
                 r'Discarded generically invalid transcript\s+["\']?(\S+?)["\']?[,\s]',
             ),
             (
+                re.compile(r"Error while inferring the UTR.*multiple ORFs.*overlapping CDS found"),
+                "Overlapping CDS",
+                r'Discarded generically invalid transcript\s+["\']?(\S+?)["\']?[,\s]',
+            ),
+            (
                 re.compile(r"Invalid number of coding exons"),
                 "Invalid number of coding exons",
                 r'Invalid number of coding exons for\s+["\']?(\S+?)["\']?[,\s]',
@@ -132,6 +139,11 @@ def main():
             (
                 re.compile(r"Invalid start and stop of the ORF"),
                 "Invalid start and stop of the ORF",
+                r'Discarded generically invalid transcript\s+["\']?(\S+?)["\']?[,\s]',
+            ),
+            (
+                re.compile(r"Invalid ORF(?:\(s\))?.*Invalid CDS length"),
+                "Invalid CDS length",
                 r'Discarded generically invalid transcript\s+["\']?(\S+?)["\']?[,\s]',
             ),
             (
@@ -314,8 +326,10 @@ def main():
         "CDS which straddles 2 different exons": "#8c564b",
         "Cannot reverse strand of coding transcript": "#e377c2",
         "Overlapping exons found": "#7f7f7f",
+        "Overlapping CDS": "#9edae5",
         "Invalid number of coding exons": "#bcbd22",
         "Invalid start and stop of the ORF": "#17becf",
+        "Invalid CDS length": "#98df8a",
         "Debords its exon": "#bcbddc",
         "5'UTR present with a truncated ORF": "#cc6666",
         "Assertion failure start must be less than end": "#ff9896",
