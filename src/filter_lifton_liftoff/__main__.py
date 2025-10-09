@@ -45,7 +45,7 @@ EXCLUDED_CATEGORIES = [
     "Assertion failure start must be less than end",
     "Assertion failure",
     "Redundant",
-    "Seqid mismatch",
+    "Seqid mismatch*",
     "Strand conflict child*",
     "Strand conflict gene*",
     "Short intron*",
