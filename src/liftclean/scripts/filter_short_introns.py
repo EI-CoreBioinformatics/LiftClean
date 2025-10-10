@@ -256,13 +256,13 @@ def filter_intron(
     )
     if intron_size:
         logging.info(
-            "# - based on intron size <= {intron_size} bp".format(
+            "# - based on intron size < {intron_size} bp".format(
                 intron_size=intron_size
             )
         )
     if intron_size_ends:
         logging.info(
-            "# - based on intron size ends <= {intron_size_ends} bp".format(
+            "# - based on intron size ends < {intron_size_ends} bp".format(
                 intron_size_ends=intron_size_ends
             )
         )
