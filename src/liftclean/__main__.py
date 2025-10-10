@@ -503,11 +503,11 @@ class FilterLiftonLiftoff:
             sys.exit(exit_code)
 
     def run(self):
-        logging.info("Starting filter-lifton-liftoff")
+        logging.info("Starting LiftClean")
         logging.info(f"Command: {executed_command}")
 
         #######################################
-        # 7) process_gff:
+        #    process_gff:
         #    strand-check → gffread → sort → mikado prepare
         #######################################
         if self.lifton_gff:
@@ -518,12 +518,12 @@ class FilterLiftonLiftoff:
             self.process_gff(self.liftoff_gff, label=self.liftoff_label)
 
         #######################################
-        # 8) Generate summary_stats.csv via parse_prepare_log
+        #    Generate summary_stats.csv via parse_prepare_log
         #######################################
         self.generate_summary_stats()
 
         #######################################
-        # 9) Prepend strand-check summary & recalc Total
+        #    Prepend strand-check summary & recalc Total
         #######################################
         if self.did_lifton:
             self.append_computed_summary(label=self.lifton_label)
@@ -531,17 +531,17 @@ class FilterLiftonLiftoff:
             self.append_computed_summary(label=self.liftoff_label)
 
         #######################################
-        # 10) Regenerate summary plot
+        #    Regenerate summary plot
         #######################################
         self.regenerate_summary_plot()
 
         #######################################
-        # 11) compare_parsed_summary_csv.py
+        #    compare_parsed_summary_csv.py
         #######################################
         self.compare_parsed_summary_csv()
 
         #######################################
-        # 12) extract_gene_id_gff.py
+        #    extract_gene_id_gff.py
         #######################################
         if self.lifton_gff:
             self.extract_gene_id_gff(label=self.lifton_label)
@@ -549,7 +549,7 @@ class FilterLiftonLiftoff:
             self.extract_gene_id_gff(label=self.liftoff_label)
 
         #######################################
-        # 13) mikado util grep
+        #    mikado util grep
         #######################################
         if self.lifton_gff:
             self.mikado_util_grep(label=self.lifton_label)
@@ -557,12 +557,12 @@ class FilterLiftonLiftoff:
             self.mikado_util_grep(label=self.liftoff_label)
 
         #######################################
-        # 14) Final summary
+        #    Final summary
         #######################################
         self.final_summary()
 
         # Here would be the main logic of the filtering and comparison
-        logging.info("Finished filter-lifton-liftoff")
+        logging.info("Finished LiftClean")
 
 
 def main():
