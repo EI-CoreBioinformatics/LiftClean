@@ -6,6 +6,7 @@ import os
 import argparse
 from collections import defaultdict
 
+
 def main():
     # Setup argument parser
     parser = argparse.ArgumentParser(
@@ -107,9 +108,9 @@ def main():
         if strands["+"] and strands["-"]:
             print(f"Error: Gene '{gene_id}' has transcripts on both + and - strands.")
             for ln in sorted(strands["+"]):
-                print(f"  + (line {ln}): {feature_lines[ln-1][1]}")
+                print(f"  + (line {ln}): {feature_lines[ln - 1][1]}")
             for ln in sorted(strands["-"]):
-                print(f"  - (line {ln}): {feature_lines[ln-1][1]}")
+                print(f"  - (line {ln}): {feature_lines[ln - 1][1]}")
             print()
             if args.remove:
                 lines_to_remove.update(strands["+"] | strands["-"])
@@ -133,9 +134,9 @@ def main():
         if strands["+"] and strands["-"]:
             print(f"Error: Parent '{parent_id}' has child features on both strands.")
             for ln in sorted(strands["+"]):
-                print(f"  + (line {ln}): {feature_lines[ln-1][1]}")
+                print(f"  + (line {ln}): {feature_lines[ln - 1][1]}")
             for ln in sorted(strands["-"]):
-                print(f"  - (line {ln}): {feature_lines[ln-1][1]}")
+                print(f"  - (line {ln}): {feature_lines[ln - 1][1]}")
             print()
             if args.remove:
                 lines_to_remove.update(strands["+"] | strands["-"])
@@ -165,7 +166,7 @@ def main():
                         f"Error: Child on line {ln} (seqID='{sid}') differs from parent '{pid}' on line {pln} (seqID='{ps}')."
                     )
                     print(f"  Child:  {raw}")
-                    print(f"  Parent: {feature_lines[pln-1][1]}\n")
+                    print(f"  Parent: {feature_lines[pln - 1][1]}\n")
                     if args.remove:
                         lines_to_remove.add(ln)
                         if pid in transcript_to_gene:
@@ -181,7 +182,9 @@ def main():
 
     # 5) Cascade: remove genes with no transcripts
     for gene_id in set(affected_genes):
-        remaining = [ln for ln in gene_to_transcripts[gene_id] if ln not in lines_to_remove]
+        remaining = [
+            ln for ln in gene_to_transcripts[gene_id] if ln not in lines_to_remove
+        ]
         if not remaining:
             print(f"No remaining transcripts for gene {gene_id}; removing gene.")
             if gene_id in id_to_line:
@@ -207,7 +210,7 @@ def main():
                     print(f"Updating gene {gene_id} coords to {new_start}-{new_end}")
                     orig[3], orig[4] = str(new_start), str(new_end)
                     feature_lines[gln - 1] = (gln, "\t".join(orig))
-                    print(f"Updated line {gln}: {feature_lines[gln-1][1]}")
+                    print(f"Updated line {gln}: {feature_lines[gln - 1][1]}")
 
     # Write corrected GFF
     if args.remove:
@@ -217,7 +220,9 @@ def main():
             if args.output_dir
             else f"{os.path.splitext(gff_file_path)[0]}.corrected.gff"
         )
-        os.makedirs(os.path.dirname(out_path), exist_ok=True) if args.output_dir else None
+        os.makedirs(
+            os.path.dirname(out_path), exist_ok=True
+        ) if args.output_dir else None
         with open(out_path, "w") as out:
             for ln, line in feature_lines:
                 if ln not in lines_to_remove:
@@ -232,6 +237,7 @@ def main():
                 print(f"discarding,{subcat},{len(tids)},{len(set(tids))}")
 
     print("Checks complete.")
+
 
 if __name__ == "__main__":
     main()

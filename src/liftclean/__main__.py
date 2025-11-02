@@ -4,6 +4,7 @@
 Lifton/Liftoff transcript filtering and comparison pipeline
 
 """
+
 import os
 import sys
 import argparse
@@ -57,7 +58,7 @@ Note:
   - In paired mode, both --lifton_gff and --liftoff_gff are required.
   - The script will symlink input files into the output directory.
   - Filtering is based on Mikado Prepare identified errors. Categories of errors can be excluded i.e. not filtered via --exclude_from_filtering. Full list of categories can be found below:
-    {',\n\t'.join(EXCLUDED_CATEGORIES)}
+    {",\n\t".join(EXCLUDED_CATEGORIES)}
     * Categories marked with * cannot be excluded from being filtered.
 
    - The script assumes the presence of external tools:
@@ -193,7 +194,6 @@ class FilterLiftonLiftoff:
         logging.info(f"Output will be saved to {self.output}")
 
     def process_gff(self, gff_file, label):
-
         # strand checks
         corrected = os.path.join(self.analysis_dir, f"{label}.corrected.gff")
         corrected_log = os.path.join(
@@ -414,10 +414,10 @@ class FilterLiftonLiftoff:
         """
         if self.args.single:
             if self.did_lifton:
-                cmd = f"plot_summary_csvs { os.path.join(self.analysis_dir, f"mikado_prepare_{self.lifton_label}", f"mikado_prepare_{self.lifton_label}_summary_stats.csv")} --title 'Rejected Transcripts {self.lifton_label}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
+                cmd = f"plot_summary_csvs {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_summary_stats.csv')} --title 'Rejected Transcripts {self.lifton_label}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
                 self.process_cmd(cmd)
             else:
-                cmd = f"plot_summary_csvs { os.path.join(self.analysis_dir, f"mikado_prepare_{self.liftoff_label}", f"mikado_prepare_{self.liftoff_label}_summary_stats.csv")} --title 'Rejected Transcripts {self.liftoff_label}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
+                cmd = f"plot_summary_csvs {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_summary_stats.csv')} --title 'Rejected Transcripts {self.liftoff_label}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
                 self.process_cmd(cmd)
         else:
             cmd = f"plot_summary_csvs {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_summary_stats.csv')} {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_summary_stats.csv')} --title 'Comparison of Rejected Transcripts {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
@@ -430,14 +430,14 @@ class FilterLiftonLiftoff:
         if self.args.single:
             logging.info("Running compare_parsed_summary_csv.py (single)")
             if self.did_lifton:
-                cmd = f"compare_parsed_summary_csv --single --gff_file {self.lifton_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f"mikado_prepare_{self.lifton_label}", f"mikado_prepare_{self.lifton_label}_parsed_summary.csv")} --output {self.output} --exclude '{self.args.exclude_from_filtering}'"
+                cmd = f"compare_parsed_summary_csv --single --gff_file {self.lifton_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_parsed_summary.csv')} --output {self.output} --exclude '{self.args.exclude_from_filtering}'"
                 self.process_cmd(cmd)
             else:
-                cmd = f"compare_parsed_summary_csv --single --gff_file {self.liftoff_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f"mikado_prepare_{self.liftoff_label}", f"mikado_prepare_{self.liftoff_label}_parsed_summary.csv")} --output {self.output} --exclude '{self.args.exclude_from_filtering}'"
+                cmd = f"compare_parsed_summary_csv --single --gff_file {self.liftoff_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_parsed_summary.csv')} --output {self.output} --exclude '{self.args.exclude_from_filtering}'"
                 self.process_cmd(cmd)
         else:
             logging.info("Running compare_parsed_summary_csv.py (paired)")
-            cmd = f"compare_parsed_summary_csv --gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} --csv_files {os.path.join(self.analysis_dir, f"mikado_prepare_{self.lifton_label}", f"mikado_prepare_{self.lifton_label}_parsed_summary.csv")} {os.path.join(self.analysis_dir, f"mikado_prepare_{self.liftoff_label}", f"mikado_prepare_{self.liftoff_label}_parsed_summary.csv")} --labels {self.lifton_label},{self.liftoff_label} --output_prefix {self.prefix} --output {self.output} --plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' --exclude '{self.args.exclude_from_filtering}'"
+            cmd = f"compare_parsed_summary_csv --gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} --csv_files {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_parsed_summary.csv')} {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_parsed_summary.csv')} --labels {self.lifton_label},{self.liftoff_label} --output_prefix {self.prefix} --output {self.output} --plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' --exclude '{self.args.exclude_from_filtering}'"
             self.process_cmd(cmd)
 
     def extract_gene_id_gff(self, label):

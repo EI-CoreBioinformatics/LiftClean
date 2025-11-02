@@ -127,7 +127,9 @@ def main():
                 r'Discarded generically invalid transcript\s+["\']?(\S+?)["\']?[,\s]',
             ),
             (
-                re.compile(r"Error while inferring the UTR.*multiple ORFs.*overlapping CDS found"),
+                re.compile(
+                    r"Error while inferring the UTR.*multiple ORFs.*overlapping CDS found"
+                ),
                 "Overlapping CDS",
                 r'Discarded generically invalid transcript\s+["\']?(\S+?)["\']?[,\s]',
             ),
@@ -203,7 +205,11 @@ def main():
                 tid_match = re.search(tid_regex, line)
                 if tid_match:
                     tid = tid_match.group(1).strip("\"' ,.")
-                    entry["tid"] = tid.replace(rm_prefix, "") if rm_prefix and tid.startswith(rm_prefix) else tid
+                    entry["tid"] = (
+                        tid.replace(rm_prefix, "")
+                        if rm_prefix and tid.startswith(rm_prefix)
+                        else tid
+                    )
                 key = (entry["Category"], entry["SubCategory"])
                 stats[key] += 1
                 if tid:

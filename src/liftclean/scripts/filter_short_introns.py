@@ -50,7 +50,9 @@ def get_id(file, line, attribute, field):
     try:
         id_field
     except NameError as err:
-        logging.error(f"Error: Cannot find {field} from the file '{file}', exiting..")
+        logging.error(
+            f"Error: Cannot find {field} from the file '{file}', exiting with error: {err}"
+        )
         sys.exit(1)
 
     return id_field
@@ -389,7 +391,7 @@ def process_output(
                                                 ".",
                                                 x[STRAND],
                                                 ".",
-                                                f"ID={mrna_id}.intron{i+1};Parent={mrna_id}",
+                                                f"ID={mrna_id}.intron{i + 1};Parent={mrna_id}",
                                             ]
                                             f.write("\t".join(intronLine) + "\n")
                     elif x[TYPE] in [
@@ -428,12 +430,12 @@ def process_output(
     )
 
     with open(detailed_discard_list_file, "a") as f:
-        f.write(f"\n\n")
-        f.write(f"Category,SubCategory,Count,Unique TID Count\n")
+        f.write("\n\n")
+        f.write("Category,SubCategory,Count,Unique TID Count\n")
         f.write(
             f"discarding,Short intron,{len(discard_list.keys())},{len(discard_list.keys())}\n"
         )
-        f.write(f"Checks complete.\n")
+        f.write("Checks complete.\n")
 
     logging.info(
         f"# Discarded models mapping file written to file: {discard_list_mapping_file}"
@@ -445,7 +447,6 @@ def process_output(
 
 
 def main():
-
     parser = argparse.ArgumentParser(
         description="Script to filter GFF3 on intron size for GFF3 structure: [gene]->[mRNA]->[exon|CDS|five_prime_UTR|three_prime_UTR|five_prime_utr|three_prime_utr]"
     )
