@@ -232,8 +232,6 @@ class FilterLiftonLiftoff:
         cmd = "gff_strand_checker --check_parent_seq_id "
         if self.args.check_dup_ids:
             cmd += "--check_dup_ids "
-        if self.args.allow_trans_splicing:
-            cmd += "--allow_trans_splicing "
         cmd += (
             f" --remove {gff_file} --output_dir {self.analysis_dir} > {corrected_log}"
         )
@@ -760,11 +758,6 @@ def main():
         "--check_dup_ids",
         action="store_false",
         help="Check for duplicate IDs, but only for features that are parents; if found, remove all instances and all descendants [default:%(default)s]",
-    )
-    parser.add_argument(
-        "--allow_trans_splicing",
-        action="store_true",
-        help="If set, skip all checks for any parent (and its children) where the parent has 'exception=trans-splicing' [default:%(default)s]",
     )
     # Configurable transcript and gene types
     parser.add_argument(
