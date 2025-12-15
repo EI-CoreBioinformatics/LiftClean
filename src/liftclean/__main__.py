@@ -29,27 +29,30 @@ class HelpFormatter(
 
 # list of excluded categories from plot
 EXCLUDED_CATEGORIES = [
-    "\tSize under minimum",
-    "Internal stop codons found",
-    "Incorrect fusions of splice junctions",
+    "\t5'UTR present with a truncated ORF",
+    "Assertion failure",
+    "Assertion failure start must be less than end",
     "Both UTR present with truncated ORF",
-    "Defined UTRs but no CDS feature",
     "CDS which straddles 2 different exons",
     "Cannot reverse strand of coding transcript",
-    "Overlapping exons found",
-    "Overlapping CDS",
+    "Debords its exon",
+    "Defined UTRs but no CDS feature",
+    "Duplicate parent feature ID",
+    "General",
+    "Incorrect fusions of splice junctions",
+    "Internal stop codons found",
+    "Invalid CDS length",
     "Invalid number of coding exons",
     "Invalid start and stop of the ORF",
-    "Invalid CDS length",
-    "Debords its exon",
-    "5'UTR present with a truncated ORF",
-    "Assertion failure start must be less than end",
-    "Assertion failure",
+    "Overlapping CDS",
+    "Overlapping exons found",
     "Redundant",
     "Seqid mismatch*",
+    "Short intron",
+    "Size under minimum",
     "Strand conflict child*",
     "Strand conflict gene*",
-    "Short intron*",
+    "Strand conflict gene-child*",
 ]
 
 help_text_note = f"""
@@ -226,7 +229,15 @@ class FilterLiftonLiftoff:
 
         # strand checks
         logging.info(f"Strand-checking {label} GFF file")
-        cmd = f"gff_strand_checker --check_parent_seq_id --remove {gff_file} --output_dir {self.analysis_dir} > {corrected_log}"
+        cmd = "gff_strand_checker --check_parent_seq_id "
+        if self.args.check_dup_ids:
+            cmd += "--check_dup_ids "
+        if self.args.allow_trans_splicing:
+            cmd += "--allow_trans_splicing "
+        cmd += (
+            f" --remove {gff_file} --output_dir {self.analysis_dir} > {corrected_log}"
+        )
+
         if not os.path.isfile(corrected):
             self.process_cmd(cmd)
         if os.path.isfile(corrected) and self.debug:
@@ -239,7 +250,19 @@ class FilterLiftonLiftoff:
         logging.info(
             f"Filtering models with introns <= {self.args.min_intron_length} bp"
         )
-        cmd = f"filter_short_introns --intron_size {self.args.min_intron_length} --intron_size_ends {self.args.min_intron_length} --detailed_discard_list_file {intron_corrected_tsv} --discard_list_mapping_file {intron_corrected_mapping_tsv} {corrected} --output {intron_corrected}"
+        cmd = (
+            "filter_short_introns "
+            f"--intron_size {self.args.min_intron_length} "
+            f"--intron_size_ends {self.args.min_intron_length} "
+            f"--detailed_discard_list_file {intron_corrected_tsv} "
+            f"--discard_list_mapping_file {intron_corrected_mapping_tsv} "
+        )
+        if self.args.transcript_types:
+            cmd += f"--transcript_types {self.args.transcript_types} "
+        if self.args.gene_types:
+            cmd += f"--gene_types {self.args.gene_types} "
+        cmd += f"{corrected} --output {intron_corrected}"
+
         if not os.path.isfile(intron_corrected):
             self.process_cmd(cmd)
         if os.path.isfile(intron_corrected) and self.debug:
@@ -289,7 +312,18 @@ class FilterLiftonLiftoff:
                 f.write(f"{sorted_gff}\t{self.mikado_list_label}\tTrue\t0\tFalse\n")
         logging.info(f"Created Mikado list file {list_file}")
 
-        cmd = f"mikado prepare --fasta {self.genome} --minimum-cdna-length {self.args.minimum_cdna_length} -p {self.args.threads} -od {mikado_dir} -o {f'mikado_prepare_{label}.gtf'} -of {f'mikado_prepare_{label}.fasta'} -l {mikado_log} {self.args.mikado_prepare_params} --list {list_file}"
+        cmd = (
+            "mikado prepare "
+            f"--fasta {self.genome} "
+            f"--minimum-cdna-length {self.args.minimum_cdna_length} "
+            f"-p {self.args.threads} "
+            f"-od {mikado_dir} "
+            f"-o mikado_prepare_{label}.gtf "
+            f"-of mikado_prepare_{label}.fasta "
+            f"-l {mikado_log} "
+            f"{self.args.mikado_prepare_params}"
+            f"--list {list_file}"
+        )
         if not os.path.isfile(os.path.join(mikado_dir, f"mikado_prepare_{label}.gtf")):
             self.process_cmd(cmd)
         if (
@@ -321,13 +355,35 @@ class FilterLiftonLiftoff:
         rm_prefix = self.mikado_list_label + "_"
         if self.args.single:
             if self.did_lifton:
-                cmd = f"parse_prepare_log {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}.log')} --title 'Rejected Transcripts {self.lifton_label}' --rm_prefix {rm_prefix} --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
+                cmd = (
+                    "parse_prepare_log "
+                    f"{os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}.log')} "
+                    f"--title 'Rejected Transcripts {self.lifton_label}' "
+                    f"--rm_prefix {rm_prefix} "
+                    f"--output_prefix '{self.prefix}_Rejected_Transcripts' "
+                    f"--output {self.output}"
+                )
                 self.process_cmd(cmd)
             else:
-                cmd = f"parse_prepare_log {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}.log')} --title 'Rejected Transcripts {self.liftoff_label}' --rm_prefix {rm_prefix} --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
+                cmd = (
+                    "parse_prepare_log "
+                    f"{os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}.log')} "
+                    f"--title 'Rejected Transcripts {self.liftoff_label}' "
+                    f"--rm_prefix {rm_prefix} "
+                    f"--output_prefix '{self.prefix}_Rejected_Transcripts' "
+                    f"--output {self.output}"
+                )
                 self.process_cmd(cmd)
         else:
-            cmd = f"parse_prepare_log {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}.log')} {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}.log')} --title 'Rejected Transcripts {self.lifton_label} and {self.liftoff_label}' --rm_prefix {rm_prefix} --output_prefix '{self.prefix}_Rejected_Transcripts' --output {self.output}"
+            cmd = (
+                "parse_prepare_log "
+                f"{os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}.log')} "
+                f"{os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}.log')} "
+                f"--title 'Rejected Transcripts {self.lifton_label} and {self.liftoff_label}' "
+                f"--rm_prefix {rm_prefix} "
+                f"--output_prefix '{self.prefix}_Rejected_Transcripts' "
+                f"--output {self.output}"
+            )
             self.process_cmd(cmd)
 
     def append_computed_summary(self, label):
@@ -414,13 +470,32 @@ class FilterLiftonLiftoff:
         """
         if self.args.single:
             if self.did_lifton:
-                cmd = f"plot_summary_csvs {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_summary_stats.csv')} --title 'Rejected Transcripts {self.lifton_label}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
+                cmd = (
+                    "plot_summary_csvs "
+                    f"{os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_summary_stats.csv')} "
+                    f"--title 'Rejected Transcripts {self.lifton_label}' "
+                    f"--output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' "
+                    f"--output {self.output}"
+                )
                 self.process_cmd(cmd)
             else:
-                cmd = f"plot_summary_csvs {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_summary_stats.csv')} --title 'Rejected Transcripts {self.liftoff_label}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
+                cmd = (
+                    "plot_summary_csvs "
+                    f"{os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_summary_stats.csv')} "
+                    f"--title 'Rejected Transcripts {self.liftoff_label}' "
+                    f"--output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' "
+                    f"--output {self.output}"
+                )
                 self.process_cmd(cmd)
         else:
-            cmd = f"plot_summary_csvs {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_summary_stats.csv')} {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_summary_stats.csv')} --title 'Comparison of Rejected Transcripts {self.prefix}' --output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' --output {self.output}"
+            cmd = (
+                "plot_summary_csvs "
+                f"{os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_summary_stats.csv')} "
+                f"{os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_summary_stats.csv')} "
+                f"--title 'Comparison of Rejected Transcripts {self.prefix}' "
+                f"--output_prefix '{self.prefix}_Rejected_Transcripts_summary_plot' "
+                f"--output {self.output}"
+            )
             self.process_cmd(cmd)
 
     def compare_parsed_summary_csv(self):
@@ -430,14 +505,38 @@ class FilterLiftonLiftoff:
         if self.args.single:
             logging.info("Running compare_parsed_summary_csv.py (single)")
             if self.did_lifton:
-                cmd = f"compare_parsed_summary_csv --single --gff_file {self.lifton_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_parsed_summary.csv')} --output {self.output} --exclude '{self.args.exclude_from_filtering}'"
+                cmd = (
+                    "compare_parsed_summary_csv "
+                    "--single "
+                    f"--gff_file {self.lifton_sorted_gff} "
+                    f"--csv_file {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_parsed_summary.csv')} "
+                    f"--output {self.output} "
+                    f"--exclude '{self.args.exclude_from_filtering}'"
+                )
                 self.process_cmd(cmd)
             else:
-                cmd = f"compare_parsed_summary_csv --single --gff_file {self.liftoff_sorted_gff} --csv_file {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_parsed_summary.csv')} --output {self.output} --exclude '{self.args.exclude_from_filtering}'"
+                cmd = (
+                    "compare_parsed_summary_csv "
+                    "--single "
+                    f"--gff_file {self.liftoff_sorted_gff} "
+                    f"--csv_file {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_parsed_summary.csv')} "
+                    f"--output {self.output} "
+                    f"--exclude '{self.args.exclude_from_filtering}'"
+                )
                 self.process_cmd(cmd)
         else:
             logging.info("Running compare_parsed_summary_csv.py (paired)")
-            cmd = f"compare_parsed_summary_csv --gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} --csv_files {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_parsed_summary.csv')} {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_parsed_summary.csv')} --labels {self.lifton_label},{self.liftoff_label} --output_prefix {self.prefix} --output {self.output} --plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' --exclude '{self.args.exclude_from_filtering}'"
+            cmd = (
+                "compare_parsed_summary_csv "
+                f"--gff_files {self.lifton_sorted_gff} {self.liftoff_sorted_gff} "
+                f"--csv_files {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_parsed_summary.csv')} "
+                f"{os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_parsed_summary.csv')} "
+                f"--labels {self.lifton_label},{self.liftoff_label} "
+                f"--output_prefix {self.prefix} "
+                f"--output {self.output} "
+                f"--plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' "
+                f"--exclude '{self.args.exclude_from_filtering}'"
+            )
             self.process_cmd(cmd)
 
     def extract_gene_id_gff(self, label):
@@ -652,6 +751,32 @@ def main():
         default=0,
         help="Provide intron size. Any models with intron size under this value will be removed. Bookended and overlapping exon features are merged with the default setting [default: %(default)s]",
     )
+    parser.add_argument(
+        "--limit_filters",
+        action="store_true",
+        help="Enable this to not exclude models based on categories: Size under minimum, Incorrect fusions of splice junctions, Cannot reverse strand of coding transcript, Redundant [default:%(default)s]",
+    )
+    parser.add_argument(
+        "--check_dup_ids",
+        action="store_false",
+        help="Check for duplicate IDs, but only for features that are parents; if found, remove all instances and all descendants [default:%(default)s]",
+    )
+    parser.add_argument(
+        "--allow_trans_splicing",
+        action="store_true",
+        help="If set, skip all checks for any parent (and its children) where the parent has 'exception=trans-splicing' [default:%(default)s]",
+    )
+    # Configurable transcript and gene types
+    parser.add_argument(
+        "--transcript_types",
+        default="mRNA,primary_transcript,transcript,lnc_RNA,ncRNA,miRNA,rRNA,tRNA,snoRNA,snRNA,scaRNA,pseudogenic_transcript,antisense_RNA",
+        help="Comma-separated list of feature types to treat as transcripts (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--gene_types",
+        default="gene,ncRNA_gene,pseudogene",
+        help="Comma-separated list of feature types to treat as gene-level (default: %(default)s)",
+    )
     # add gffread params
     parser.add_argument(
         "--gffread_params",
@@ -672,12 +797,6 @@ def main():
         default="",
         type=str,
         help='Additional parameters to pass to mikado (enclosed in quotes). Only modify defaults if you know what you are doing. MUST use the assignment format --mikado_prepare_params="<params>" [default:"%(default)s"]',
-    )
-    # limit_filters
-    parser.add_argument(
-        "--limit_filters",
-        action="store_true",
-        help="Enable this to not exclude models based on categories: Size under minimum, Incorrect fusions of splice junctions, Cannot reverse strand of coding transcript, Redundant [default:%(default)s]",
     )
     parser.add_argument(
         "--force",
