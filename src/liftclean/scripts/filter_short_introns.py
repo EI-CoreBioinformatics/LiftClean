@@ -59,6 +59,7 @@ def get_id(file, line, attribute, field):
     Used in less-hot paths; hot-paths use fast_get().
     """
     pattern = field + "=([^;]+)"
+    id_field = None
     try:
         m = re.search(pattern, attribute)
         id_field = m.group(1) if m else None
@@ -72,9 +73,7 @@ def get_id(file, line, attribute, field):
             f"Error: {err}. '{field}' cannot be extracted from the file '{file}' line below\n{line}"
         )
 
-    try:
-        id_field
-    except NameError:
+    if id_field is None:
         logging.error(f"Error: Cannot find {field} from the file '{file}', exiting..")
         sys.exit(1)
     return id_field

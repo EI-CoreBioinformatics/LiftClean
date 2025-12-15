@@ -74,8 +74,8 @@ Note:
 class FilterLiftonLiftoff:
     def __init__(self, args):
         self.args = args
-        self.output = None
-        self.analysis_dir = None
+        self.output = str()
+        self.analysis_dir = str()
         self.prefix = None
         self.force = self.args.force
         self.debug = self.args.debug
