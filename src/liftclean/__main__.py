@@ -55,13 +55,14 @@ EXCLUDED_CATEGORIES = [
     "Strand conflict gene-child*",
 ]
 
+_excluded_categories_formatted = ",\n\t".join(EXCLUDED_CATEGORIES)
 help_text_note = f"""
 Note:
   - In --single mode, you must provide exactly one of --lifton_gff or --liftoff_gff.
   - In paired mode, both --lifton_gff and --liftoff_gff are required.
   - The script will symlink input files into the output directory.
   - Filtering is based on Mikado Prepare identified errors. Categories of errors can be excluded i.e. not filtered via --exclude_from_filtering. Full list of categories can be found below:
-    {",\n\t".join(EXCLUDED_CATEGORIES)}
+    {_excluded_categories_formatted}
     * Categories marked with * cannot be excluded from being filtered.
 
    - The script assumes the presence of external tools:
