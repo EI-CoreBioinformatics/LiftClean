@@ -552,18 +552,20 @@ class FilterLiftonLiftoff:
             cmd = f"extract_gene_id_gff {id_file} {self.liftoff_sorted_gff} {out_tsv}"
         self.process_cmd(cmd)
 
-    def mikado_util_grep(self, label):
+    def mikado_utils(self, label):
         """
         Running mikado util grep
         """
         tsv_file = os.path.join(self.output, f"{label}.sorted.ids.retained.tsv")
         out_gff = os.path.join(self.output, f"{label}.sorted.retained.gff")
+        out_gff_stats = out_gff + ".mikado_stats.tsv"
+        out_gff_stats_summary = out_gff + ".mikado_stats.summary.tsv"
         logging.info(f"Running mikado util grep for {label}")
         cmd = None
         if label == self.lifton_label:
-            cmd = f"mikado util grep {tsv_file} {self.lifton_sorted_gff} {out_gff}"
+            cmd = f"mikado util grep {tsv_file} {self.lifton_sorted_gff} {out_gff} && mikado util stats {out_gff} > {out_gff_stats} && parse_mikado_stats {out_gff_stats} > {out_gff_stats_summary}"
         else:
-            cmd = f"mikado util grep {tsv_file} {self.liftoff_sorted_gff} {out_gff}"
+            cmd = f"mikado util grep {tsv_file} {self.liftoff_sorted_gff} {out_gff} && mikado util stats {out_gff} > {out_gff_stats} && parse_mikado_stats {out_gff_stats} > {out_gff_stats_summary}"
         self.process_cmd(cmd)
 
     def final_summary(self):
@@ -578,12 +580,25 @@ class FilterLiftonLiftoff:
             print(
                 f" - lifton retained TSV: {os.path.join(self.output, f'{self.lifton_label}.sorted.ids.retained.tsv')}"
             )
+            print(
+                f" - lifton retained Mikado stats TSV: {os.path.join(self.output, f'{self.lifton_label}.sorted.retained.gff.mikado_stats.tsv')}"
+            )
+            print(
+                f" - lifton retained Mikado stats summary TSV: {os.path.join(self.output, f'{self.lifton_label}.sorted.retained.gff.mikado_stats.summary.tsv')}"
+            )
+
         if self.did_liftoff:
             print(
                 f" - liftoff retained GFF: {os.path.join(self.output, f'{self.liftoff_label}.sorted.retained.gff')}"
             )
             print(
                 f" - liftoff retained TSV: {os.path.join(self.output, f'{self.liftoff_label}.sorted.ids.retained.tsv')}"
+            )
+            print(
+                f" - liftoff retained Mikado stats TSV: {os.path.join(self.output, f'{self.liftoff_label}.sorted.retained.gff.mikado_stats.tsv')}"
+            )
+            print(
+                f" - liftoff retained Mikado stats summary TSV: {os.path.join(self.output, f'{self.liftoff_label}.sorted.retained.gff.mikado_stats.summary.tsv')}"
             )
         comparison_csv = os.path.join(
             self.output, f"{self.prefix}_Rejected_Transcripts.csv"
@@ -650,9 +665,9 @@ class FilterLiftonLiftoff:
         #    mikado util grep
         #######################################
         if self.lifton_gff:
-            self.mikado_util_grep(label=self.lifton_label)
+            self.mikado_utils(label=self.lifton_label)
         if self.liftoff_gff:
-            self.mikado_util_grep(label=self.liftoff_label)
+            self.mikado_utils(label=self.liftoff_label)
 
         #######################################
         #    Final summary

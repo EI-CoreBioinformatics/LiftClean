@@ -23,6 +23,7 @@ plot_summary_csvs = "liftclean.scripts.plot_summary_csvs:main"
 compare_parsed_summary_csv = "liftclean.scripts.compare_parsed_summary_csv:main"
 extract_gene_id_gff = "liftclean.scripts.extract_gene_id_gff:main"
 filter_short_introns = "liftclean.scripts.filter_short_introns:main"
+parse_mikado_stats = "liftclean.scripts.parse_mikado_stats:main"
 
 [build-system]
 requires = ["uv_build>=0.9.16,<0.10.0"]
