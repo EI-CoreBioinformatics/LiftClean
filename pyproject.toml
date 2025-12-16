@@ -7,11 +7,11 @@ authors = [
     {name = "Gemy George Kaithakottil", email = "Gemy.Kaithakottil@earlham.ac.uk"}
 ]
 readme = "README.md"
-requires-python = ">=3.12,<4.0"
+requires-python = ">3.8,<4.0"
 license = {text = "MIT License"}
 dependencies = [
-    "matplotlib>=3.9.2,<4.0.0",
-    "pandas>=2.2.3,<3.0.0",
+    "matplotlib<4.0.0",
+    "pandas>=1.5.0,<3.0.0",
     "upsetplot>=0.9.0,<1.0.0",
 ]
 
@@ -25,5 +25,5 @@ extract_gene_id_gff = "liftclean.scripts.extract_gene_id_gff:main"
 filter_short_introns = "liftclean.scripts.filter_short_introns:main"
 
 [build-system]
-requires = ["uv_build>=0.8.22,<0.9.0"]
+requires = ["uv_build>=0.9.16,<0.10.0"]
 build-backend = "uv_build"
