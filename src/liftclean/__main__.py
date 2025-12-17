@@ -748,7 +748,7 @@ def main():
         "--exclude_from_filtering",
         type=str,
         default="",
-        help="Provide a comma-separated list of types to be excluded from being filtered (default: none, e.g. 'Size under minimum,Redundant' etc [default:%(default)s]",
+        help="Provide a comma-separated list of types to be excluded from being filtered, for example, 'Size under minimum,Redundant' etc [default:%(default)s]",
     )
     # --minimum-cdna-length
     parser.add_argument(
