@@ -61,7 +61,7 @@ Note:
   - In --single mode, you must provide exactly one of --lifton_gff or --liftoff_gff.
   - In paired mode, both --lifton_gff and --liftoff_gff are required.
   - The script will symlink input files into the output directory.
-  - Filtering is based on Mikado Prepare identified errors. Categories of errors can be excluded i.e. not filtered via --exclude_from_filtering. Full list of categories can be found below:
+  - Filtering is based on Mikado Prepare identified warnings. Categories of warnings can be excluded i.e. not filtered via --exclude_from_filtering. Full list of categories can be found below:
     {_excluded_categories_formatted}
     * Categories marked with * cannot be excluded from being filtered.
 
@@ -510,8 +510,11 @@ class FilterLiftonLiftoff:
                     f"--gff_file {self.lifton_sorted_gff} "
                     f"--csv_file {os.path.join(self.analysis_dir, f'mikado_prepare_{self.lifton_label}', f'mikado_prepare_{self.lifton_label}_parsed_summary.csv')} "
                     f"--output {self.output} "
-                    f"--exclude '{self.args.exclude_from_filtering}'"
                 )
+                if self.args.exclude_from_filtering:
+                    cmd += f" --exclude '{self.args.exclude_from_filtering}'"
+                else:
+                    cmd += " --exclude ''"
                 self.process_cmd(cmd)
             else:
                 cmd = (
@@ -520,8 +523,11 @@ class FilterLiftonLiftoff:
                     f"--gff_file {self.liftoff_sorted_gff} "
                     f"--csv_file {os.path.join(self.analysis_dir, f'mikado_prepare_{self.liftoff_label}', f'mikado_prepare_{self.liftoff_label}_parsed_summary.csv')} "
                     f"--output {self.output} "
-                    f"--exclude '{self.args.exclude_from_filtering}'"
                 )
+                if self.args.exclude_from_filtering:
+                    cmd += f" --exclude '{self.args.exclude_from_filtering}'"
+                else:
+                    cmd += " --exclude ''"
                 self.process_cmd(cmd)
         else:
             logging.info("Running compare_parsed_summary_csv.py (paired)")
@@ -534,8 +540,12 @@ class FilterLiftonLiftoff:
                 f"--output_prefix {self.prefix} "
                 f"--output {self.output} "
                 f"--plot_title 'Comparison of Retained and Rejected IDs {self.prefix}' "
-                f"--exclude '{self.args.exclude_from_filtering}'"
+                # f"--exclude '{self.args.exclude_from_filtering}'"
             )
+            if self.args.exclude_from_filtering:
+                cmd += f" --exclude '{self.args.exclude_from_filtering}'"
+            else:
+                cmd += " --exclude ''"
             self.process_cmd(cmd)
 
     def extract_gene_id_gff(self, label):
@@ -741,13 +751,13 @@ def main():
         "-t",
         "--threads",
         default=1,
-        help="Number of threads to use for copying",
+        help="Number of threads to use for copying [default:%(default)s]",
     )
     parser.add_argument(
         "-e",
         "--exclude_from_filtering",
         type=str,
-        default="",
+        default=None,
         help="Provide a comma-separated list of types to be excluded from being filtered, for example, 'Size under minimum,Redundant' etc [default:%(default)s]",
     )
     # --minimum-cdna-length
@@ -779,12 +789,12 @@ def main():
     parser.add_argument(
         "--transcript_types",
         default="mRNA,primary_transcript,transcript,lnc_RNA,ncRNA,miRNA,rRNA,tRNA,snoRNA,snRNA,scaRNA,pseudogenic_transcript,antisense_RNA",
-        help="Comma-separated list of feature types to treat as transcripts (default: %(default)s)",
+        help="Comma-separated list of feature types to treat as transcripts [default: %(default)s]",
     )
     parser.add_argument(
         "--gene_types",
         default="gene,ncRNA_gene,pseudogene",
-        help="Comma-separated list of feature types to treat as gene-level (default: %(default)s)",
+        help="Comma-separated list of feature types to treat as gene-level [default: %(default)s]",
     )
     # add gffread params
     parser.add_argument(
