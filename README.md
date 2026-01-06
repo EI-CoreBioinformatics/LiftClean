@@ -1,5 +1,6 @@
 # LiftClean
 Gemy George Kaithakottil, David Swarbreck  
+[![DOI](https://zenodo.org/badge/1063856495.svg)](https://doi.org/10.5281/zenodo.18166872)
 
 ## Abstract
 
