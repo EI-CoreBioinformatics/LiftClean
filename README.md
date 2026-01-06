@@ -3,9 +3,14 @@ Gemy George Kaithakottil, David Swarbreck
 
 ## Abstract
 
-LiftClean is a bioinformatics tool (Python) designed to process and clean lift-over genome annotation data (Currently supporting [LiftOn](https://github.com/Kuanhao-Chao/LiftOn) and [LiftOff](https://github.com/agshumate/Liftoff)). LiftClean identifies the errors (also generates a plot) with the lift-over tools by running [Mikado](https://github.com/EI-CoreBioinformatics/mikado?tab=readme-ov-file#mikado---pick-your-transcript-a-pipeline-to-determine-and-select-the-best-rna-seq-prediction), filters them (user configurable) and generates a cleaned GFF at the end, which can be used for any downstream analysis, ensuring data integrity across genome annotations.
+LiftClean detects potential problems in lifted-over (projected) annotations that may be incompatible with coding gene models. These issues include internal stop codons, as well as structural anomalies such as book-ended exons (zero-length introns), overlapping CDS segments, or overlapping exon features.
 
-LiftClean utility can clean up the output from [LiftOn](https://github.com/Kuanhao-Chao/LiftOn) as well as [LiftOff](https://github.com/agshumate/Liftoff) and generate a cleaned GFF file, along with a report and PNG plots showing the types of errors found during the cleaning process.
+LiftClean uses [Mikado](https://github.com/EI-CoreBioinformatics/mikado?tab=readme-ov-file#mikado---pick-your-transcript-a-pipeline-to-determine-and-select-the-best-rna-seq-prediction) Prepare to identify and categorise these issues, including producing summary plots. It then filters the problematic annotations (with user-configurable options) and generates a cleaned GFF file suitable for downstream genome annotation workflows.
+
+The LiftClean utility can therefore refine [LiftOn](https://github.com/Kuanhao-Chao/LiftOn) and [Liftoff](https://github.com/agshumate/Liftoff) outputs by producing:
+- a cleaned, ready-to-use GFF file,
+- a detailed report, and
+- PNG plots summarising the warnings detected during processing.
 
 ## Installation
 
@@ -72,14 +77,15 @@ export PYTHONPATH=/path/to/software/liftclean/${version}/x86_64/lib/python3.10/s
 
 ### Usage
 ```console
-$ liftclean -h
-usage: liftclean [-h] -g GENOME_FASTA [-n LIFTON_GFF] [-f LIFTOFF_GFF] [--alt_lifton_label ALT_LIFTON_LABEL] [--alt_liftoff_label ALT_LIFTOFF_LABEL] [-p PREFIX] [-o OUTPUT] [-s] [-t THREADS] [-e EXCLUDE_FROM_FILTERING] [-m MINIMUM_CDNA_LENGTH] [-i MIN_INTRON_LENGTH]
-                 [--limit_filters] [--check_dup_ids] [--transcript_types TRANSCRIPT_TYPES] [--gene_types GENE_TYPES] [--gffread_params GFFREAD_PARAMS] [--gt_gff3_params GT_GFF3_PARAMS] [--mikado_prepare_params MIKADO_PREPARE_PARAMS] [--force] [-d]
+$ liftclean --help
+usage: liftclean [-h] -g GENOME_FASTA [-n LIFTON_GFF] [-f LIFTOFF_GFF] [--alt_lifton_label ALT_LIFTON_LABEL] [--alt_liftoff_label ALT_LIFTOFF_LABEL] [-p PREFIX] [-o OUTPUT] [-s] [-t THREADS] [-e EXCLUDE_FROM_FILTERING] [-m MINIMUM_CDNA_LENGTH]
+                 [-i MIN_INTRON_LENGTH] [--limit_filters] [--check_dup_ids] [--transcript_types TRANSCRIPT_TYPES] [--gene_types GENE_TYPES] [--gffread_params GFFREAD_PARAMS] [--gt_gff3_params GT_GFF3_PARAMS]
+                 [--mikado_prepare_params MIKADO_PREPARE_PARAMS] [--force] [-d]
 
         Lifton/Liftoff transcript filtering and comparison pipeline
 
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -g GENOME_FASTA, --genome_fasta GENOME_FASTA
                         Provide reference genome FASTA file (default: None)
@@ -99,7 +105,7 @@ optional arguments:
   -t THREADS, --threads THREADS
                         Number of threads to use for copying (default: 1)
   -e EXCLUDE_FROM_FILTERING, --exclude_from_filtering EXCLUDE_FROM_FILTERING
-                        Provide a comma-separated list of types to be excluded from being filtered (default: none, e.g. 'Size under minimum,Redundant' etc [default:]
+                        Provide a comma-separated list of types to be excluded from being filtered, for example, 'Size under minimum,Redundant' etc [default:]
   -m MINIMUM_CDNA_LENGTH, --minimum_cdna_length MINIMUM_CDNA_LENGTH
                         Provide minimum cDNA length for filtering. Anything lower will be excluded [default: 48]
   -i MIN_INTRON_LENGTH, --min_intron_length MIN_INTRON_LENGTH
@@ -123,8 +129,8 @@ Note:
   - In --single mode, you must provide exactly one of --lifton_gff or --liftoff_gff.
   - In paired mode, both --lifton_gff and --liftoff_gff are required.
   - The script will symlink input files into the output directory.
-  - Filtering is based on Mikado Prepare identified errors. Categories of errors can be excluded i.e. not filtered via --exclude_from_filtering. Full list of categories can be found below:
-    	5'UTR present with a truncated ORF,
+  - Filtering is based on Mikado Prepare identified warnings. Categories of warnings can be excluded i.e. not filtered via --exclude_from_filtering. Full list of categories can be found below:
+	5'UTR present with a truncated ORF,
 	Assertion failure,
 	Assertion failure start must be less than end,
 	Both UTR present with truncated ORF,
@@ -305,7 +311,7 @@ output
 
 ### LiftClean Main Output Files
 * `*sorted.retained.gff`: Cleaned GFF3 file containing only the transcripts that passed all filtering criteria.
-* `*Rejected_Transcripts_summary_plot.png`: PNG plot summarising the types of errors found in the rejected transcripts.
+* `*Rejected_Transcripts_summary_plot.png`: PNG plot summarising the types of warnings found in the rejected transcripts.
 * `*sorted.retained.gff.mikado_stats.tsv`: Detailed statistics of the cleaned GFF3 file generated by Mikado.
 * `*sorted.retained.gff.mikado_stats.summary.tsv`: Summary statistics of the cleaned GFF3 file generated by Mikado.
 * `*upset_plot.png`: UpSet plot showing transcript IDs that are common/unique between the retained and rejected Liftoff and liftOn files. This is only generated when both Liftoff and liftOn GFFs are provided.
