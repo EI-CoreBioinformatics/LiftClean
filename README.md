@@ -1,3 +1,8 @@
+![PyPI - Version](https://img.shields.io/pypi/v/liftclean)
+![GitHub Release](https://img.shields.io/github/v/release/EI-CoreBioinformatics/liftclean)
+![Pepy Total Downloads](https://img.shields.io/pepy/dt/liftclean)
+![Docker Pulls](https://img.shields.io/docker/pulls/gemygk/liftclean)
+
 # LiftClean
 Gemy George Kaithakottil, David Swarbreck  
 [![DOI](https://zenodo.org/badge/1063856495.svg)](https://doi.org/10.5281/zenodo.18166872)
