@@ -1,7 +1,7 @@
-![PyPI - Version](https://img.shields.io/pypi/v/liftclean)
-![GitHub Release](https://img.shields.io/github/v/release/EI-CoreBioinformatics/liftclean)
-![Pepy Total Downloads](https://img.shields.io/pepy/dt/liftclean)
-![Docker Pulls](https://img.shields.io/docker/pulls/gemygk/liftclean)
+[![PyPI - Version](https://img.shields.io/pypi/v/liftclean)](https://pypi.python.org/pypi/liftclean)
+[![GitHub Release](https://img.shields.io/github/v/release/EI-CoreBioinformatics/liftclean)](https://github.com/EI-CoreBioinformatics/liftclean/releases)
+[![Pepy Total Downloads](https://img.shields.io/pepy/dt/liftclean)](https://pypistats.org/packages/liftclean)
+[![Docker Pulls](https://img.shields.io/docker/pulls/gemygk/liftclean)](https://hub.docker.com/r/gemygk/liftclean)
 
 # LiftClean
 Gemy George Kaithakottil, David Swarbreck  
