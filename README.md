@@ -26,7 +26,7 @@ All installation methods below will install LiftClean along with its dependencie
 LiftClean can be installed with Docker. If you don't have Docker, please install [Docker](https://docs.docker.com/get-docker/) first. Then you can pull the Docker image with LiftClean installed
 
 ```console
-VERSION=0.1.0
+VERSION=0.2.0
 docker run gemygk/liftclean:v${VERSION} liftclean -h
 ```
 
@@ -35,7 +35,7 @@ LiftClean can be installed with Singularity. If you don't have Singularity, plea
 
 We can directly run LiftClean from the Singularity image hosted on DockerHub
 ```console
-VERSION=0.1.0
+VERSION=0.2.0
 singularity exec docker://gemygk/liftclean:v${VERSION} liftclean -h
 ```
 
@@ -43,15 +43,15 @@ Or, we can build and run a Singularity image, following the steps below:
 ```console
 # Create a Singularity definition file, like below:
 
-$ cat liftclean-0.1.0.def
+$ cat liftclean-0.2.0.def
 bootstrap: docker
-from: gemygk/liftclean:v0.1.0
+from: gemygk/liftclean:v0.2.0
 
 # Build the Singularity image
-$ sudo singularity build liftclean-0.1.0.sif liftclean-0.1.0.def
+$ sudo singularity build liftclean-0.2.0.sif liftclean-0.2.0.def
 
 # Execute LiftClean from the Singularity image
-$ singularity exec liftclean-0.1.0.sif liftclean -h
+$ singularity exec liftclean-0.2.0.sif liftclean -h
 ```
 
 ### Manual Installation
@@ -70,7 +70,7 @@ cd LiftClean
 ```
 Build and install using [UV](https://github.com/astral-sh/uv?tab=readme-ov-file#uv)
 ```console
-version=0.1.0 \
+version=0.2.0 \
      && uv build \
      && pip install --prefix=/path/to/software/liftclean/${version}/x86_64 -U dist/*whl
 ```
