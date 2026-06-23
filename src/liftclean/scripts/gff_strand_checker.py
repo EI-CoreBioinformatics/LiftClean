@@ -55,8 +55,11 @@ def main():
         sys.exit(1)
 
     # Data structures
-    gene_strands = defaultdict(lambda: {"+": set(), "-": set()})
-    parent_strands = defaultdict(lambda: {"+": set(), "-": set()})
+    # UPDATED: track unknown strands '.' and '?' too
+    gene_strands = defaultdict(lambda: {"+": set(), "-": set(), ".": set(), "?": set()})
+    parent_strands = defaultdict(
+        lambda: {"+": set(), "-": set(), ".": set(), "?": set()}
+    )
     gene_to_transcripts = defaultdict(list)  # gene_id -> [transcript line nums]
     transcript_children = defaultdict(
         list
@@ -140,7 +143,8 @@ def main():
             if fid and pid and ftype not in ["exon", "CDS"]:
                 transcript_to_gene[fid] = pid
                 gene_to_transcripts[pid].append(line_num)
-                if strand in ["+", "-"]:
+                # UPDATED: track '.', '?' too
+                if strand in ["+", "-", ".", "?"]:
                     gene_strands[pid][strand].add(line_num)
 
             # Classify exon/CDS children per transcript
@@ -148,7 +152,8 @@ def main():
                 transcript_children[pid].append(line_num)
 
             # Track strand of any child under its parent
-            if pid and strand in ["+", "-"]:
+            # UPDATED: track '.', '?' too
+            if pid and strand in ["+", "-", ".", "?"]:
                 parent_strands[pid][strand].add(line_num)
 
     # Helpers
@@ -173,6 +178,17 @@ def main():
         #   - --allow_trans_splicing is on AND
         #   - the parent ID is in exempt_parent_ids (any of its occurrences had exception=trans-splicing)
         return args.allow_trans_splicing and pid in exempt_parent_ids
+
+    # NEW: strand conflict rule:
+    #   conflict if:
+    #     - both '+' and '-' appear; OR
+    #     - any unknown ('.' or '?') appears together with any known ('+' or '-')
+    def has_strand_conflict(strands_dict):
+        has_plus = bool(strands_dict.get("+"))
+        has_minus = bool(strands_dict.get("-"))
+        has_known = has_plus or has_minus
+        has_unk = bool(strands_dict.get(".")) or bool(strands_dict.get("?"))
+        return (has_plus and has_minus) or (has_known and has_unk)
 
     # 0) Duplicate ID detection & cascading removals (only if enabled, and only for PARENT features)
     if args.check_dup_ids:
@@ -246,17 +262,26 @@ def main():
         parts = feature_lines[line_num - 1][1].split("\t")
         if len(parts) < 3 or parts[2] not in ("gene", "ncRNA_gene"):
             continue  # only check for real gene entries
-        if strands["+"] and strands["-"]:
-            print(f"Error: Gene '{gene_id}' has transcripts on both + and - strands.")
+
+        # UPDATED: use has_strand_conflict (includes unknown '.'/'?')
+        if has_strand_conflict(strands):
+            print(
+                f"Error: Gene '{gene_id}' has transcripts with conflicting strands (mix of +/-, or unknown with known)."
+            )
             for ln in sorted(strands["+"]):
                 print(f"  + (line {ln}): {feature_lines[ln - 1][1]}")
             for ln in sorted(strands["-"]):
                 print(f"  - (line {ln}): {feature_lines[ln - 1][1]}")
+            for ln in sorted(strands["."]):
+                print(f"  . (line {ln}): {feature_lines[ln - 1][1]}")
+            for ln in sorted(strands["?"]):
+                print(f"  ? (line {ln}): {feature_lines[ln - 1][1]}")
             print()
             if args.remove:
-                lines_to_remove.update(strands["+"] | strands["-"])
+                # UPDATED: remove all strand buckets involved
+                lines_to_remove.update(strands["+"] | strands["-"] | strands["."] | strands["?"])
                 affected_genes.add(gene_id)
-                for ln in strands["+"] | strands["-"]:
+                for ln in (strands["+"] | strands["-"] | strands["."] | strands["?"]):
                     attrs = feature_lines[ln - 1][1].split("\t")[8]
                     tm = re.search(r"ID=([^;]+)", attrs)
                     if tm:
@@ -284,7 +309,8 @@ def main():
             if parts[2] not in ("gene", "ncRNA_gene"):
                 continue
             strand = parts[6]
-            if strand in ["+", "-"]:
+            # UPDATED: include '.' and '?'
+            if strand in ["+", "-", ".", "?"]:
                 gene_occ_strands.append(strand)
 
         if not gene_occ_strands:
@@ -299,7 +325,8 @@ def main():
             ctype, cstrand = cparts[2], cparts[6]
             if ctype not in ("exon", "CDS"):
                 continue
-            if cstrand not in ["+", "-"]:
+            # UPDATED: include '.' and '?'
+            if cstrand not in ["+", "-", ".", "?"]:
                 continue
 
             # If ANY gene occurrence has a different strand than this child, it’s a conflict
@@ -309,13 +336,13 @@ def main():
         if bad_children:
             parent_strand_summary = ",".join(sorted(set(gene_occ_strands)))
             print(
-                f"Error: Gene '{gene_id}' (strand(s) {parent_strand_summary}) has direct child features on the opposite strand."
+                f"Error: Gene '{gene_id}' (strand(s) {parent_strand_summary}) has direct child features on conflicting strands."
             )
             for ln in sorted(bad_children):
                 print(f"  child (line {ln}): {feature_lines[ln - 1][1]}")
             print()
             if args.remove:
-                # Remove those opposite-strand children and any of their descendants
+                # Remove those conflicting children and any of their descendants
                 stack = list(bad_children)
                 while stack:
                     cur = stack.pop()
@@ -345,15 +372,24 @@ def main():
             if parent_type in ("gene", "ncRNA_gene"):
                 continue  # already handled above
 
-        if strands["+"] and strands["-"]:
-            print(f"Error: Parent '{parent_id}' has child features on both strands.")
+        # UPDATED: use has_strand_conflict to include '.'/'?' mixing with +/- as conflict
+        if has_strand_conflict(strands):
+            print(
+                f"Error: Parent '{parent_id}' has child features with conflicting strands (mix of +/-, or unknown with known)."
+            )
             for ln in sorted(strands["+"]):
                 print(f"  + (line {ln}): {feature_lines[ln - 1][1]}")
             for ln in sorted(strands["-"]):
                 print(f"  - (line {ln}): {feature_lines[ln - 1][1]}")
+            for ln in sorted(strands["."]):
+                print(f"  . (line {ln}): {feature_lines[ln - 1][1]}")
+            for ln in sorted(strands["?"]):
+                print(f"  ? (line {ln}): {feature_lines[ln - 1][1]}")
             print()
             if args.remove:
-                lines_to_remove.update(strands["+"] | strands["-"])
+                lines_to_remove.update(
+                    strands["+"] | strands["-"] | strands["."] | strands["?"]
+                )
                 # Also drop the parent itself to avoid orphan children mix
                 if parent_ln:
                     lines_to_remove.add(parent_ln)
@@ -490,3 +526,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
